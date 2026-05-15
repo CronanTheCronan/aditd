@@ -15,6 +15,39 @@ Living log of agreed defaults for **A Door Inside the Dark**. Unity-first, clean
 9. Prefer **ScriptableObjects** (or equivalent data assets) for definitions once gameplay data exists—avoid hardcoding scattered magic values.
 10. **Avoid singletons and global frameworks** until a need is proven; favor explicit references and small scopes first.
 
+## 2026-05-15 - Wave 003 authorized: First-Person Controller MVP
+
+Decision:
+Authorize a narrow generic first-person controller MVP for Wave 003.
+
+Context:
+The project needs a controllable player body before Pressure, Shadow perception, Hearth, lore inspection, or puzzle behavior can be validated.
+
+Approved scope:
+- Generic movement.
+- Generic camera look.
+- Generic interact raycast.
+- Minimal Input Actions asset.
+- Minimal graybox test scene.
+- Debug interactable object.
+
+Explicitly out of scope:
+- Pressure.
+- Shadow perception.
+- Hearth.
+- Inventory.
+- Save/load.
+- Puzzle framework.
+- Enemy AI.
+- Combat.
+- Any narrative or horror-specific coupling inside player movement.
+
+Reasoning:
+The controller is foundation work. It should remain boring, stable, and reusable so later symbolic systems can attach without contaminating the player scripts.
+
+Consequences:
+Cursor may now implement player movement only within the Wave 003 scope. Claude must audit for player-controller contamination, singleton creep, missing scene references, and missing build log/manual test coverage.
+
 ## Wave 002 — Coding conventions and guardrails (2026-05-14)
 
 11. **C# namespaces** follow `ADoorInsideTheDark.<Area>` and align with `Assets/_Project/Code/<Area>/` (`Core`, `Player`, `Interaction`, `Rooms`, `Puzzles`, `Pressure`, `Shadow`, `Hearth`, `Inventory`, `Lore`, `Save`, `UI`, `Utilities`).
