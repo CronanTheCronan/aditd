@@ -4,6 +4,41 @@ Newest entries at the top.
 
 ---
 
+## 2026-05-14 - Wave 002: Project Coding Conventions and Guardrails
+
+### Summary
+
+Added Cursor project rules for Unity C# conventions, namespaces, serialization and null-safety expectations, architecture guardrails, and stable ID formats. Documented the same decisions in `Docs/DECISIONS.md`. No gameplay scripts, scenes, or packages were added.
+
+### Files Changed
+
+- `.cursor/rules/adid-architecture-and-waves.mdc` (new)
+- `.cursor/rules/adid-csharp-unity.mdc` (new)
+- `Docs/DECISIONS.md`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- **Always-on rule:** waves, out-of-scope systems, architecture limits, stable ID table, agent roles.
+- **C# rule (when editing `Assets/_Project/**/*.cs`):** namespace ↔ folder table, `[SerializeField]` / `OnValidate`, null-safety logging, general Unity C# guardrails.
+
+### Manual Test Steps
+
+1. In Cursor, open **Settings → Rules** (or the rules panel) and confirm the two **A Door Inside the Dark** rules appear with the expected descriptions.
+2. Open any existing `.cs` file under `Assets/` (e.g. tutorial scripts): confirm the C# rule applies only when the path matches `Assets/_Project/**/*.cs` (new project code); adjust globs later if you move third-party code.
+3. Read `Docs/DECISIONS.md` § Wave 002 and confirm it matches team intent.
+
+### Known Limitations
+
+- Rules do not enforce compile-time checks; they guide agents and humans. Assembly definitions / analyzers can be added in a later wave if desired.
+- Tutorial or non-`_Project` scripts are outside the C# rule glob until moved or the glob is extended.
+
+### Rollback Notes
+
+- Delete `.cursor/rules/adid-architecture-and-waves.mdc` and `.cursor/rules/adid-csharp-unity.mdc`, then remove the **Wave 002** subsection from `Docs/DECISIONS.md` and this build log entry from `Docs/BUILD_LOG.md` (or revert the commit).
+
+---
+
 ## 2026-05-14 - Wave 000: Clean Project Foundation
 
 ### Summary

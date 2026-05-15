@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "$raw=[Console]::In.ReadToEnd();$json=$raw|ConvertFrom-Json;$fp=$json.tool_input.file_path;if($fp -and ($fp -match '(?i)[\\\\/](Library|Temp|Obj|Logs|UserSettings)[\\\\/]' -or $fp -match '(?i)^(Library|Temp|Obj|Logs|UserSettings)[\\\\/]')){$out=[PSCustomObject]@{systemMessage='GUARDRAIL: Unity-generated folder edit is forbidden by project guardrails. Path: '+$fp};$out|ConvertTo-Json -Compress}",
+            "statusMessage": "Checking for Unity-generated folder violations..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "shell": "powershell",
+            "command": "Write-Output (ConvertTo-Json @{systemMessage='Pre-commit reminder: check claude_hooks/pre_commit_audit_checklist.md before committing.'} -Compress)"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,50 @@
+---
+description: ADITD — Unity C# style, namespaces, serialization, null-safety
+globs: Assets/_Project/**/*.cs
+alwaysApply: false
+---
+
+# A Door Inside the Dark — Unity C# conventions
+
+## Namespaces (required for new scripts under `Assets/_Project/Code/`)
+
+| Folder under `Code/` | Namespace |
+|----------------------|-----------|
+| `Core/` | `ADoorInsideTheDark.Core` |
+| `Player/` | `ADoorInsideTheDark.Player` |
+| `Interaction/` | `ADoorInsideTheDark.Interaction` |
+| `Rooms/` | `ADoorInsideTheDark.Rooms` |
+| `Puzzles/` | `ADoorInsideTheDark.Puzzles` |
+| `Pressure/` | `ADoorInsideTheDark.Pressure` |
+| `Shadow/` | `ADoorInsideTheDark.Shadow` |
+| `Hearth/` | `ADoorInsideTheDark.Hearth` |
+| `Inventory/` | `ADoorInsideTheDark.Inventory` |
+| `Lore/` | `ADoorInsideTheDark.Lore` |
+| `Save/` | `ADoorInsideTheDark.Save` |
+| `UI/` | `ADoorInsideTheDark.UI` |
+| `Utilities/` | `ADoorInsideTheDark.Utilities` |
+
+Editor-only scripts: keep under an `Editor` folder and use `ADoorInsideTheDark.<Area>.Editor` or `ADoorInsideTheDark.Editor` if shared—stay consistent within the file.
+
+## Serialized fields
+
+- Prefer **`[SerializeField] private`** fields over public fields for Unity-assigned references.
+- Use **`OnValidate()`** to clamp ranges, fix invalid combinations, or warn when serialized data is inconsistent (editor-only safety net).
+- Avoid **public mutable** fields unless Unity or a specific API requires them; prefer properties with limited setters for non-serialized runtime state.
+
+## Null-safety and missing references
+
+- **Do not** ignore null/missing references that indicate broken scenes or prefabs.
+- When a required reference is missing at runtime: prefer **`Debug.LogWarning`** (include `gameObject.name`, script type, and what was null). Fail visibly; avoid silent `return` with no log.
+- Where a graceful fallback is **honestly** safe (optional cosmetic, etc.), log once at **Warning** or **Log** level and document the fallback in code briefly.
+
+## General C# style (Unity)
+
+- Use `nameof(...)` for serialized field messages and logging where it helps refactors.
+- Prefer explicit types or `var` consistently per file; avoid `dynamic`.
+- Avoid heavy work in `Update` without profiling; cache component lookups in `Awake`/`OnEnable` when reused.
+- Do not introduce **singletons**, **static service registries**, or **large framework bases** unless `Docs/DECISIONS.md` or an approved change request allows it.
+
+## IDs in code
+
+Use the stable ID shapes from the architecture rule (`room.…`, `puzzle.…`, `lore.…`, `anchor.…`, `pressure.…`); centralize string literals for shared IDs in `const` fields or SOs when they land.

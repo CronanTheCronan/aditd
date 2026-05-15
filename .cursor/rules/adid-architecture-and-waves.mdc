@@ -1,0 +1,44 @@
+---
+description: ADITD — architecture guardrails, waves, stable IDs, out-of-scope systems
+alwaysApply: true
+---
+
+# A Door Inside the Dark — Architecture and waves
+
+## Agent context (do not override human scope)
+
+- **Cursor:** primary implementation; keep diffs small and documented in `Docs/BUILD_LOG.md`.
+- **Claude Code:** audit-first, not default builder.
+- **Gemini Notebook:** story / lore / puzzle continuity source.
+- **Grok:** grounded critique, not canon owner.
+
+## Out of scope until a dedicated wave explicitly allows it
+
+Do **not** implement: gameplay loops, **player movement**, **Pressure**, **Shadow**, **Hearth**, **save/load**, **inventory**, or **puzzle** systems—nor large “framework” layers. Do not add packages or churn `Library/`, `Temp/`, `Obj/`, `Logs/`, `UserSettings/`.
+
+## Architecture guardrails
+
+- **Player controller:** keep generic and thin until gameplay waves; no horror-specific coupling in core movement (when it exists).
+- **Puzzle logic:** prefer **scene-local** components / small collaborators on room roots unless a change request explicitly approves shared infrastructure.
+- **No singletons / global service locators** unless approved in `Docs/DECISIONS.md` or a scoped change request.
+- **Data:** prefer **ScriptableObject** (or serialized assets) for stable content definitions; avoid scattered magic strings for IDs.
+- **Patterns:** do not build large abstractions before **at least two rooms** justify them.
+- **Wave size:** a healthy implementation wave usually touches **1–6 files**; if larger, split or document why.
+
+## Stable ID conventions (string keys for data, SOs, specs)
+
+Use **lowercase** segments separated by **dots**; use **snake_case** within a segment when needed. Prefix by domain:
+
+| Domain   | Shape | Examples |
+|----------|--------|----------|
+| Room     | `room.<area>.<room_slug>` | `room.main_floor.weight_of_door` |
+| Puzzle   | `puzzle.<puzzle_slug>` | `puzzle.weight_of_door` |
+| Lore     | `lore.<slug>` | `lore.green_thermos` |
+| Anchor   | `anchor.<slug>` | `anchor.green_thermos` |
+| Pressure | `pressure.<area>.<source_slug>` | `pressure.main_floor.door_static` |
+
+IDs must stay **stable** across renames of scene objects where possible; document breaking changes in `Docs/BUILD_LOG.md`.
+
+## Namespace ↔ folder (see C# rule under `Assets/_Project/**/*.cs`)
+
+Code under `Assets/_Project/Code/<Area>/` uses `ADoorInsideTheDark.<PascalCaseArea>` matching the folder name (e.g. `Code/Puzzles` → `ADoorInsideTheDark.Puzzles`).

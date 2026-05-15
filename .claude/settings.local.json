@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pwsh -NoProfile -Command '$raw=[Console]::In.ReadToEnd\\(\\);$json=$raw|ConvertFrom-Json;$fp=$json.tool_input.file_path;if\\($fp -and $fp -match '\\\\''\\(?i\\)\\(Library|Temp|Obj|Logs|UserSettings\\)[/\\\\\\\\]'\\\\''\\){$out=[PSCustomObject]@{systemMessage=\\('\\\\''GUARDRAIL: Unity-generated folder is forbidden — '\\\\''+$fp\\)};$out|ConvertTo-Json -Compress}')",
+      "Bash(pwsh -NoProfile -Command '$raw=[Console]::In.ReadToEnd\\(\\);$json=$raw|ConvertFrom-Json;$fp=$json.tool_input.file_path;if\\($fp -and \\($fp -match '\\\\''\\(?i\\)[\\\\\\\\\\\\/]\\(Library|Temp|Obj|Logs|UserSettings\\)[\\\\\\\\\\\\/]'\\\\'' -or $fp -match '\\\\''\\(?i\\)^\\(Library|Temp|Obj|Logs|UserSettings\\)[\\\\\\\\\\\\/]'\\\\''\\)\\){$out=[PSCustomObject]@{systemMessage='\\\\''GUARDRAIL: Unity-generated folder edit is forbidden. Path: '\\\\''+$fp};$out|ConvertTo-Json -Compress}')",
+      "Bash(New-Item *)"
+    ]
+  }
+}
