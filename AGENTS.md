@@ -38,7 +38,7 @@ Matt makes final creative and implementation decisions.
 
 - Namespace root: `ADoorInsideTheDark`.
 
-- Project-owned Unity content lives under `Assets/\_Project`.
+- Project-owned Unity content lives under `Assets/_Project`.
 
 - Project docs live under `Docs`.
 
@@ -52,7 +52,7 @@ Codex may:
 
 - Create or update Markdown docs.
 
-- Maintain `Docs/BUILD\_LOG.md` with newest entries at the top.
+- Maintain `Docs/BUILD_LOG.md` with newest entries at the top.
 
 - Create room, puzzle, lore, or agent report skeletons from templates.
 
@@ -92,7 +92,7 @@ Codex must not:
 
 
 
-Every Codex wave must update `Docs/BUILD\_LOG.md` at the top.
+Every Codex wave must update `Docs/BUILD_LOG.md` at the top.
 
 
 
@@ -132,7 +132,7 @@ A Codex wave is done when:
 
 - It includes rollback notes.
 
-- `Docs/BUILD\_LOG.md` is updated at the top.
+- `Docs/BUILD_LOG.md` is updated at the top.
 
 - Risks or uncertainties are stated clearly.
 
@@ -166,9 +166,9 @@ Also consult:
 
 
 
-- `agent\_instructions/CODEX\_AUTOMATION\_DOCS\_SYNC.md`
+- `agent_instructions/CODEX_AUTOMATION_DOCS_SYNC.md`
 
-- `Docs/BUILD\_LOG.md`
+- `Docs/BUILD_LOG.md`
 
 - `Docs/DECISIONS.md`
 

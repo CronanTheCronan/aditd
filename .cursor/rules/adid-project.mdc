@@ -1,3 +1,8 @@
+---
+description: ADITD — Unity/Cursor discipline, tooling, player scope, serialization safety
+alwaysApply: true
+---
+
 ## Unity/Cursor implementation discipline
 
 - Prefer script changes over serialized scene/prefab edits unless the wave explicitly requires Unity asset changes.

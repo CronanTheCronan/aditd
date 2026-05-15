@@ -13,6 +13,46 @@
 
 ---
 
+## 2026-05-15 - Wave 005A: Claude audit fixes (rules, docs, raycast cache)
+
+### Summary
+
+Low-risk follow-up before Wave 006: Cursor rule frontmatter on `adid-project.mdc`, Markdown escape fixes in `AGENTS.md`, Wave 001 numbering note in the build log, and per-frame caching of `PlayerInteractor` physics raycasts so prompt update and interact input reuse one result. No gameplay systems, scenes, prefabs, or serialized Unity YAML changed.
+
+### Files Changed
+
+- `.cursor/rules/adid-project.mdc`
+- `AGENTS.md`
+- `Docs/BUILD_LOG.md`
+- `Assets/_Project/Code/Player/PlayerInteractor.cs`
+
+### What Was Implemented
+
+- **`adid-project.mdc`:** YAML frontmatter (`description`, `alwaysApply: true`) so Cursor treats the rule as always-applied reliably.
+- **`AGENTS.md`:** Removed stray backslash escapes before `_` in paths so Markdown renders cleanly.
+- **Build log / Wave 001:** **Wave 001** was never used as a shipped wave ID (numbering jumps **Wave 000** → **Wave 002**); nothing was retracted—it is an intentionally skipped milestone slot.
+- **`PlayerInteractor`:** Invalidate a small frame cache at `Update` start; `TryGetRaycastHit` computes at most once per frame and reuses for `UpdateInteractionPrompt` and `TryInteract` when both run.
+
+### Manual Test Steps
+
+1. **Rules:** Open `.cursor/rules/adid-project.mdc` and confirm the file starts with `---`, `description:`, `alwaysApply: true`, `---`.
+2. **Markdown:** Open `AGENTS.md` and confirm paths like `Assets/_Project`, `Docs/BUILD_LOG.md`, and `agent_instructions/CODEX_AUTOMATION_DOCS_SYNC.md` render without visible backslashes before underscores.
+3. **Play Mode (Wave 004 parity):** In `Test_FirstPersonController` (or your wired scene): aim at inspectable → **E Inspect** prompt; aim away → hidden; press **E** → panel opens; **E** or **Escape** → closes; inspectable path still fires `Interact` when implemented; plain `DebugInteractable` still shows **E Interact** and responds to **E**; movement/look unchanged.
+4. Optional: add a temporary counter in editor-only debug only if validating single raycast (not committed)—behavioral parity with step 3 is sufficient.
+
+### Known Limitations
+
+- Cache is intentionally **per-frame fields** only; no threading or persistence.
+- Early returns (no camera, inspection panel open for prompt hide) still skip raycasting where they did before; first `TryGetRaycastHit` on a frame fills the cache.
+
+### Rollback Notes
+
+- Revert the four listed files (or Git restore paths above).
+- Remove this build log section.
+
+
+---
+
 ## 2026-05-15 - Wave 005: Documentation and rules alignment
 
 ### Summary

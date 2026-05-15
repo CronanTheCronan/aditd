@@ -17,6 +17,10 @@ namespace ADoorInsideTheDark.Player
 
         private InputAction _interactAction;
 
+        private bool _frameRaycastCached;
+        private bool _frameRaycastHit;
+        private RaycastHit _cachedRaycastHit;
+
         private void Awake()
         {
             if (_context == null)
@@ -39,6 +43,7 @@ namespace ADoorInsideTheDark.Player
 
         private void Update()
         {
+            _frameRaycastCached = false;
             UpdateInteractionPrompt();
             HandleInteractInput();
         }
@@ -154,13 +159,22 @@ namespace ADoorInsideTheDark.Player
 
         private bool TryGetRaycastHit(out RaycastHit hit)
         {
+            if (_frameRaycastCached)
+            {
+                hit = _cachedRaycastHit;
+                return _frameRaycastHit;
+            }
+
             Ray ray = new(_camera.transform.position, _camera.transform.forward);
-            return Physics.Raycast(
+            _frameRaycastHit = Physics.Raycast(
                 ray,
                 out hit,
                 _interactDistance,
                 _interactLayers,
                 QueryTriggerInteraction.Ignore);
+            _cachedRaycastHit = hit;
+            _frameRaycastCached = true;
+            return _frameRaycastHit;
         }
 
         private static IInspectable FindInspectable(Transform hitTransform)
