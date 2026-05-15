@@ -1,0 +1,83 @@
+## Unity/Cursor implementation discipline
+
+- Prefer script changes over serialized scene/prefab edits unless the wave explicitly requires Unity asset changes.
+- When creating or editing Unity scenes, prefabs, Input Actions, materials, or assets, clearly list the exact Unity Editor validation steps.
+- Do not casually rewrite `.unity`, `.prefab`, `.asset`, `.inputactions`, `.mat`, `.controller`, `.anim`, or `.meta` files.
+- Do not delete `.meta` files unless explicitly rolling back a newly-created file from the same wave.
+- If a script depends on an inspector-assigned reference, include the required assignment in the output.
+- If a runtime fallback is used, such as `Resources.Load`, document the required path and the reason for the fallback.
+- Avoid `Resources.Load` for long-term architecture unless explicitly approved. It is acceptable as an MVP fallback when documented.
+- Prefer explicit serialized references, ScriptableObject definitions, or small scene-local wiring over hidden global discovery.
+- After every wave, report:
+  - changed files
+  - inspector assignments
+  - manual Play Mode test steps
+  - known limitations
+  - rollback notes
+  - build log update status
+
+## Player controller contamination rule
+
+Player scripts may own:
+- movement
+- look
+- interaction raycast
+- input routing
+- PlayerContext
+
+Player scripts must not own:
+- puzzle rules
+- door state machines
+- Pressure calculations
+- Shadow perception rules
+- lore discovery state
+- Hearth state
+- save/load orchestration
+- room-specific behavior
+
+If a feature seems to require adding puzzle behavior to the player, stop and create a scene-local room or interactable component instead.
+
+## Unity Editor tooling rule
+
+When a wave requires creating or wiring scenes, prefabs, UI, ScriptableObjects, test objects, materials, or other Unity assets, prefer creating an Editor-only setup tool instead of manually editing serialized `.unity`, `.prefab`, `.asset`, or `.meta` files.
+
+Editor tooling should live under:
+
+`Assets/_Project/Code/Editor`
+
+Preferred patterns:
+- Add menu commands with `[MenuItem("ADITD/...")]`.
+- Use Unity APIs such as `GameObject`, `AddComponent`, `AssetDatabase`, `PrefabUtility`, `Undo`, and `EditorSceneManager`.
+- Make setup commands idempotent where reasonable.
+- Log clear success/warning messages.
+- Avoid runtime dependencies on Editor-only code.
+- Do not place Editor scripts outside an `Editor` folder.
+- Do not use editor helpers as hidden gameplay systems.
+
+When generating setup helpers, include:
+- exact Unity menu path
+- what the command creates or updates
+- what it refuses to overwrite
+- manual validation steps
+- rollback notes
+
+## Unity safety rules
+
+- Prefer C# and docs edits over serialized Unity YAML edits.
+- Do not edit `.unity`, `.prefab`, `.asset`, `.meta`, `.mat`, `.controller`, `.anim`, `.inputactions`, `ProjectSettings/**`, or `Packages/**` unless explicitly requested.
+- Never delete or regenerate `.meta` files casually.
+- When scene or prefab wiring is required, provide exact Unity Editor steps instead of guessing serialized references.
+- After creating scripts, list which GameObjects/components need inspector assignment.
+- Always include manual Play Mode test steps.
+- Always include rollback notes.
+
+## Before changing architecture
+
+Before introducing a manager, service, singleton, registry, framework, or reusable abstraction, answer:
+
+1. Does the current wave require this to become playable?
+2. Can this be scene-local for now?
+3. Has the pattern appeared in at least two real rooms?
+4. Is the decision documented in Docs/DECISIONS.md?
+
+If the answer is no, do not add the abstraction.
