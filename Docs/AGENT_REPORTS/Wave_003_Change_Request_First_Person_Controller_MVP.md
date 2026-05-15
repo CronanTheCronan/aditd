@@ -4,7 +4,7 @@
 
 Date: 2026-05-15  
 
-Status: Proposed  
+Status: Approved  
 
 Owner: Matt  
 
@@ -27,6 +27,11 @@ Create a generic first-person controller MVP that allows the player to move, loo
 
 
 The project needs a body in the room before Pressure, Shadow perception, Hearth, lore inspection, or puzzle logic can be tested. This wave proves basic embodiment only.
+
+
+## Wave Size Note
+
+This wave exceeds the 1–6 file guideline because movement, look, interaction, input bindings, a player prefab, and a test scene are interdependent for a testable first-person controller MVP. The scope is still intentionally narrow: it creates only the minimum body-in-room loop required for manual testing and does not introduce Pressure, Shadow, Hearth, inventory, save/load, puzzle logic, combat, or narrative systems.
 
 
 

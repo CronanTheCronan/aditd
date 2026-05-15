@@ -1,4 +1,4 @@
-\# CODEX\_INSTRUCTIONS.md
+# CODEX\_INSTRUCTIONS.md
 
 
 
@@ -12,7 +12,7 @@ This file exists as a human-readable pointer for the A Door Inside the Dark agen
 
 Primary Codex reference:
 
-\- `AGENTS.md`
+- `AGENTS.md`
 
-\- `agent\_instructions/CODEX\_AUTOMATION\_DOCS\_SYNC.md
+- `agent\_instructions/CODEX\_AUTOMATION\_DOCS\_SYNC.md
 

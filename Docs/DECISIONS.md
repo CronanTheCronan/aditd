@@ -27,9 +27,12 @@ Approved scope:
 - Generic movement.
 - Generic camera look.
 - Generic interact raycast.
+- Minimal `IInteractable` interface.
+- Minimal `PlayerContext` data object if needed for interaction context.
+- Debug interactable object.
 - Minimal Input Actions asset.
 - Minimal graybox test scene.
-- Debug interactable object.
+- Player prefab if practical.
 
 Explicitly out of scope:
 - Pressure.

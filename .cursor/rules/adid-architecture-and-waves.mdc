@@ -22,6 +22,10 @@ Authorized as of Wave 003:
 - Generic interact raycast.
 - Minimal Input System action asset.
 - Minimal graybox controller test scene.
+- Minimal `IInteractable` interface.
+- Minimal `PlayerContext` data object if needed for interaction context.
+- Debug interactable object.
+- Player prefab if practical.
 
 Still not authorized:
 - Pressure system.
