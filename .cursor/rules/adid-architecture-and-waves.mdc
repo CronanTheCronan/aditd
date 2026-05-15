@@ -12,34 +12,22 @@ alwaysApply: true
 - **Gemini Notebook:** story / lore / puzzle continuity source.
 - **Grok:** grounded critique, not canon owner.
 
-## Current Authorization
+## Wave status vs standing guardrails
 
-The current approved implementation stage controls what Cursor may build.
+**Wave history and what shipped:** use `Docs/BUILD_LOG.md`.
 
-Authorized as of Wave 003:
-- Generic first-person player movement.
-- Generic first-person camera look.
-- Generic interact raycast.
-- Minimal Input System action asset.
-- Minimal graybox controller test scene.
-- Minimal `IInteractable` interface.
-- Minimal `PlayerContext` data object if needed for interaction context.
-- Debug interactable object.
-- Player prefab if practical.
+**Authorized scope changes:** use `Docs/DECISIONS.md` when a wave or decision expands scope or direction.
 
-Still not authorized:
-- Pressure system.
-- Shadow perception.
-- Hearth system.
-- Inventory.
-- Save/load.
-- Puzzle framework.
-- Enemy AI.
-- Combat.
-- Procedural house systems.
-- Narrative/lore implementation inside player movement.
+Do not treat this rule file as the live record of “what wave we are on.” It carries persistent architecture boundaries that stay true until `Docs/DECISIONS.md` revises them.
 
-Player movement must remain generic and decoupled from horror, puzzle, lore, Pressure, Shadow, and Hearth systems.
+**Standing deferred domains** (implement only after explicit authorization in `Docs/DECISIONS.md` / wave decisions—see log for nuance):
+
+- Pressure, Shadow perception, Hearth systems
+- Inventory, save/load, puzzle framework (shared infrastructure)
+- Enemy AI, combat, procedural house systems
+- Horror/narrative coupling inside generic player movement scripts
+
+Player movement must remain generic and decoupled from horror, puzzle, lore, Pressure, Shadow, and Hearth systems until decisions say otherwise.
 
 ## Architecture guardrails
 

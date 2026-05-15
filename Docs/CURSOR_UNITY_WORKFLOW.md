@@ -29,6 +29,8 @@ When Unity Editor wiring is required, Cursor should either:
 
 Cursor should not guess through serialized YAML edits.
 
+Criteria for choosing manual steps versus an Editor setup command are in **Manual steps vs Editor tooling** (below).
+
 ## Files Cursor may usually edit
 
 Cursor may usually edit:
@@ -165,6 +167,23 @@ Before introducing a manager, service, singleton, registry, framework, or reusab
 4. Is the decision documented in Docs/DECISIONS.md?
 
 If the answer is no, do not add the abstraction.
+
+## Manual steps vs Editor tooling
+
+Use manual Unity Editor steps when:
+- The wiring is one-time and simple.
+- Only one or two inspector references are needed.
+- The setup is unlikely to be repeated.
+- The risk of creating tooling is higher than the setup itself.
+
+Use Editor tooling when:
+- The setup is repetitive.
+- Multiple GameObjects, UI objects, prefabs, or ScriptableObjects must be created.
+- The setup is error-prone by hand.
+- The same test scene needs to be repaired or regenerated.
+- Future waves will benefit from the same creation pattern.
+
+Do not hand-edit serialized Unity YAML as a shortcut.
 
 ## Cursor output format after every wave
 

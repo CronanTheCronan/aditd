@@ -13,6 +13,48 @@
 
 ---
 
+## 2026-05-15 - Wave 005: Documentation and rules alignment
+
+### Summary
+
+Aligned Cursor rules, Claude audit reads, DECISIONS wave records, workflow cross-links, and markdown hygiene so authorization truth lives in `Docs/BUILD_LOG.md` / `Docs/DECISIONS.md` rather than stale rule snapshots. No gameplay or Unity serialized assets changed.
+
+### Files Changed
+
+- `.cursor/rules/adid-architecture-and-waves.mdc`
+- `Docs/DECISIONS.md`
+- `Docs/CURSOR_UNITY_WORKFLOW.md`
+- `Docs/UNITY_EDITOR_TOOLING.md`
+- `CLAUDE.md`
+- `CODEX_INSTRUCTIONS.md`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- **Architecture rule:** wave status pointers + standing deferred domains; rule file no longer implies latest authorization snapshot.
+- **DECISIONS:** single consolidated Wave 003 subsection; Wave 004 unchanged in substance.
+- **CLAUDE.md:** normalized markdown paths; audit doc list matches Cursor workflow docs; solo-dev cost-aware audit guidance strengthened.
+- **CURSOR_UNITY_WORKFLOW:** Golden rule links to Manual steps vs Editor tooling section.
+- **UNITY_EDITOR_TOOLING / CODEX_INSTRUCTIONS:** readable markdown and fixed Codex pointer path.
+
+### Manual Test Steps
+
+1. Open `.cursor/rules/adid-architecture-and-waves.mdc` and confirm it points to `Docs/BUILD_LOG.md` / `Docs/DECISIONS.md` for wave truth (no “Wave 003 is latest authority” wording).
+2. Open `Docs/DECISIONS.md` and confirm one Wave 003 block and Wave 004 block exist.
+3. Open `CLAUDE.md` and confirm audit doc bullets list `adid-project.mdc`, workflow/editor tooling docs, `BUILD_LOG`, `DECISIONS`, and cost-aware rule.
+4. Open `Docs/UNITY_EDITOR_TOOLING.md` and confirm headings/lists render without stray `\` prefixes.
+
+### Known Limitations
+
+- Standing “deferred domains” in the architecture rule remain high-level; exact wave scope still depends on dated entries in `Docs/DECISIONS.md`.
+
+### Rollback Notes
+
+- Revert the files listed above (or restore from Git).
+- Remove this build log entry.
+
+---
+
 ## 2026-05-15 - Wave 004: Interaction Prompt and Inspect Stub
 
 ### Summary
