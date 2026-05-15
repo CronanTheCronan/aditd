@@ -1,0 +1,126 @@
+# ==============================
+# Unity generated folders
+# ==============================
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# Unity crash reports
+sysinfo.txt
+
+# ==============================
+# Unity asset/cache artifacts
+# ==============================
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Unity generated files
+*.csproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.tmp
+*.log
+
+# Rider / JetBrains
+.idea/
+*.DotSettings.user
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+*.code-workspace
+
+# Cursor
+.cursor/index/
+.cursor/cache/
+.cursor/tmp/
+
+# OS junk
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ==============================
+# Build outputs
+# ==============================
+*.apk
+*.aab
+*.unitypackage
+*.app
+*.exe
+*.x86
+*.x86_64
+*.wasm
+*.symbols.zip
+
+# ==============================
+# Addressables / Streaming cache
+# Keep source Addressables config, ignore build/cache output
+# ==============================
+Assets/AddressableAssetsData/*/*.bin*
+Assets/StreamingAssets/aa/
+ServerData/
+
+# ==============================
+# Test / coverage output
+# ==============================
+TestResults/
+CoverageReport/
+coverage/
+
+# ==============================
+# NuGet / dotnet artifacts
+# ==============================
+[Bb]in/
+[Oo]bj/
+*.nupkg
+packages/
+
+# ==============================
+# Secrets / local config
+# ==============================
+.env
+.env.*
+*.local
+secrets.json
+appsettings.Local.json
+
+# ==============================
+# Claude / agent local worktrees or temp output
+# ==============================
+.claude/worktrees/
+.claude/tmp/
+.claude/cache/
+
+# ==============================
+# Keep these tracked
+# ==============================
+!Assets/
+!Packages/
+!ProjectSettings/
+!Docs/
+!agent_instructions/
+!claude_hooks/
