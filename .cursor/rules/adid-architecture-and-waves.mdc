@@ -12,9 +12,30 @@ alwaysApply: true
 - **Gemini Notebook:** story / lore / puzzle continuity source.
 - **Grok:** grounded critique, not canon owner.
 
-## Out of scope until a dedicated wave explicitly allows it
+## Current Authorization
 
-Do **not** implement: gameplay loops, **player movement**, **Pressure**, **Shadow**, **Hearth**, **save/load**, **inventory**, or **puzzle** systems—nor large “framework” layers. Do not add packages or churn `Library/`, `Temp/`, `Obj/`, `Logs/`, `UserSettings/`.
+The current approved implementation stage controls what Cursor may build.
+
+Authorized as of Wave 003:
+- Generic first-person player movement.
+- Generic first-person camera look.
+- Generic interact raycast.
+- Minimal Input System action asset.
+- Minimal graybox controller test scene.
+
+Still not authorized:
+- Pressure system.
+- Shadow perception.
+- Hearth system.
+- Inventory.
+- Save/load.
+- Puzzle framework.
+- Enemy AI.
+- Combat.
+- Procedural house systems.
+- Narrative/lore implementation inside player movement.
+
+Player movement must remain generic and decoupled from horror, puzzle, lore, Pressure, Shadow, and Hearth systems.
 
 ## Architecture guardrails
 
