@@ -25,12 +25,19 @@ namespace ADoorInsideTheDark.Rooms
         [SerializeField] private GameObject _completionMarker;
         [SerializeField] private Renderer[] _completionRenderers;
         [SerializeField] private ShadowPerceptionController _shadowPerception;
+        [SerializeField] private AudioSource _clarityAudioSource;
 
         [Header("Feedback")]
         [SerializeField] private bool _showDebugOverlay = true;
         [SerializeField] private float _wrongFormFeedbackDuration = 1.35f;
         [SerializeField] private float _switchHandlePressedAngle = 26f;
         [SerializeField] private string _shadowPerceptionControlLabel = "Hold Q to enter Shadow perception";
+        [SerializeField] private AudioClip _shadowBlockedCue;
+        [SerializeField] private AudioClip _destabilizedGuidanceCue;
+        [SerializeField] private float _shadowBlockedCueVolume = 0.12f;
+        [SerializeField] private float _destabilizedGuidanceCueVolume = 0.15f;
+        [SerializeField] private float _blockedFeedbackDuration = 0.85f;
+        [SerializeField] private float _destabilizedGuidanceDuration = 2.25f;
 
         private static readonly Color RoomUnresolvedColor = new(0.22f, 0.22f, 0.24f, 1f);
         private static readonly Color RoomDestabilizedColor = new(0.35f, 0.21f, 0.21f, 1f);
@@ -44,9 +51,13 @@ namespace ADoorInsideTheDark.Rooms
 
         private RoomState _state = RoomState.Unresolved;
         private float _feedbackTimer;
+        private float _blockedFeedbackTimer;
+        private float _destabilizedGuidanceTimer;
         private bool _shadowRevealLearned;
         private Quaternion _switchHandleBaseRotation = Quaternion.identity;
         private GUIStyle _overlayStyle;
+        private AudioClip _generatedBlockedCue;
+        private AudioClip _generatedDestabilizedGuidanceCue;
 
         public void UseOrdinarySwitch(PlayerContext context)
         {
@@ -69,6 +80,7 @@ namespace ADoorInsideTheDark.Rooms
         private void Awake()
         {
             AutoAssignDependencies();
+            AutoAssignClarityAudioSource();
 
             if (_switchHandle != null)
             {
@@ -104,11 +116,27 @@ namespace ADoorInsideTheDark.Rooms
             }
         }
 
+        private void OnDestroy()
+        {
+            DestroyGeneratedClip(ref _generatedBlockedCue);
+            DestroyGeneratedClip(ref _generatedDestabilizedGuidanceCue);
+        }
+
         private void Update()
         {
             if (_feedbackTimer > 0f)
             {
                 _feedbackTimer = Mathf.Max(0f, _feedbackTimer - Time.deltaTime);
+            }
+
+            if (_blockedFeedbackTimer > 0f)
+            {
+                _blockedFeedbackTimer = Mathf.Max(0f, _blockedFeedbackTimer - Time.deltaTime);
+            }
+
+            if (_destabilizedGuidanceTimer > 0f)
+            {
+                _destabilizedGuidanceTimer = Mathf.Max(0f, _destabilizedGuidanceTimer - Time.deltaTime);
             }
 
             ApplyCurrentVisualState();
@@ -137,9 +165,13 @@ namespace ADoorInsideTheDark.Rooms
             string instructions = _state switch
             {
                 RoomState.Unresolved =>
-                    "Use the ordinary switch with E. It will not settle the room by force alone.",
+                    _blockedFeedbackTimer > 0f
+                        ? "Nothing answers yet. Press E on the ordinary switch first, then return to Shadow."
+                        : "Press E on the ordinary switch first. Shadow reveals nothing while the room is still stable.",
                 RoomState.Destabilized =>
-                    "The glare fights you back. " + _shadowPerceptionControlLabel + " and look for the hidden seam.",
+                    _destabilizedGuidanceTimer > 0f
+                        ? "Something loosened in the room. " + _shadowPerceptionControlLabel + " and watch the back wall."
+                        : "The glare fights you back. " + _shadowPerceptionControlLabel + " and look for the hidden seam.",
                 RoomState.ShadowRevealed =>
                     "The seam is visible. Keep Shadow perception active and press E on the switch to settle the room.",
                 RoomState.Completed =>
@@ -216,6 +248,14 @@ namespace ADoorInsideTheDark.Rooms
             }
         }
 
+        private void AutoAssignClarityAudioSource()
+        {
+            if (_clarityAudioSource == null)
+            {
+                _clarityAudioSource = GetComponent<AudioSource>();
+            }
+        }
+
         private void HandleShadowPerceptionChanged(bool isActive)
         {
             if (_state == RoomState.Completed)
@@ -223,10 +263,17 @@ namespace ADoorInsideTheDark.Rooms
                 return;
             }
 
+            if (isActive && _state == RoomState.Unresolved)
+            {
+                TriggerBlockedShadowFeedback();
+                return;
+            }
+
             if (isActive && _state == RoomState.Destabilized)
             {
                 _state = RoomState.ShadowRevealed;
                 _shadowRevealLearned = true;
+                _destabilizedGuidanceTimer = 0f;
                 Debug.Log("[HouseWithTheSwitches] Shadow perception revealed the hidden seam.", this);
             }
             else if (!isActive && _state == RoomState.ShadowRevealed)
@@ -239,6 +286,9 @@ namespace ADoorInsideTheDark.Rooms
         {
             _state = RoomState.Destabilized;
             _feedbackTimer = _wrongFormFeedbackDuration;
+            _blockedFeedbackTimer = 0f;
+            _destabilizedGuidanceTimer = _destabilizedGuidanceDuration;
+            PlayClarityCue(GetDestabilizedGuidanceCue(), _destabilizedGuidanceCueVolume);
 
             if (IsShadowPerceptionActive())
             {
@@ -252,6 +302,8 @@ namespace ADoorInsideTheDark.Rooms
         {
             _state = RoomState.Completed;
             _feedbackTimer = 0f;
+            _blockedFeedbackTimer = 0f;
+            _destabilizedGuidanceTimer = 0f;
             Debug.Log("[HouseWithTheSwitches] Integrated Ego + Shadow action completed the room.", this);
         }
 
@@ -278,6 +330,12 @@ namespace ADoorInsideTheDark.Rooms
             float feedbackPulse = _feedbackTimer > 0f
                 ? Mathf.Abs(Mathf.Sin(Time.time * 24f)) * Mathf.Clamp01(_feedbackTimer / _wrongFormFeedbackDuration)
                 : 0f;
+            float blockedPulse = _blockedFeedbackTimer > 0f
+                ? Mathf.Abs(Mathf.Sin(Time.time * 11f)) * Mathf.Clamp01(_blockedFeedbackTimer / _blockedFeedbackDuration)
+                : 0f;
+            float guidancePulse = _destabilizedGuidanceTimer > 0f
+                ? Mathf.Abs(Mathf.Sin(Time.time * 7f)) * Mathf.Clamp01(_destabilizedGuidanceTimer / _destabilizedGuidanceDuration)
+                : 0f;
 
             if (_overheadLight != null)
             {
@@ -285,15 +343,22 @@ namespace ADoorInsideTheDark.Rooms
                 {
                     case RoomState.Unresolved:
                         _overheadLight.enabled = true;
-                        _overheadLight.intensity = 0.18f;
-                        _overheadLight.color = new Color(0.92f, 0.91f, 0.88f);
+                        _overheadLight.intensity = 0.18f + (blockedPulse * 0.18f);
+                        _overheadLight.color = Color.Lerp(
+                            new Color(0.92f, 0.91f, 0.88f),
+                            new Color(0.76f, 0.85f, 0.98f),
+                            blockedPulse * 0.55f);
                         break;
                     case RoomState.Destabilized:
                     case RoomState.ShadowRevealed:
                         _overheadLight.enabled = true;
-                        _overheadLight.intensity = 0.35f + (feedbackPulse * 1.9f);
+                        _overheadLight.intensity = 0.35f + (feedbackPulse * 1.9f) + (guidancePulse * 0.22f);
                         _overheadLight.color = Color.Lerp(
                             new Color(0.94f, 0.84f, 0.80f),
+                            new Color(0.70f, 0.86f, 0.95f),
+                            guidancePulse * 0.55f);
+                        _overheadLight.color = Color.Lerp(
+                            _overheadLight.color,
                             new Color(1f, 0.45f, 0.45f),
                             feedbackPulse);
                         break;
@@ -318,8 +383,8 @@ namespace ADoorInsideTheDark.Rooms
             {
                 _switchRenderer.material.color = _state switch
                 {
-                    RoomState.Unresolved => SwitchUnresolvedColor,
-                    RoomState.Destabilized => SwitchDestabilizedColor,
+                    RoomState.Unresolved => Color.Lerp(SwitchUnresolvedColor, SeamRevealColor, blockedPulse * 0.25f),
+                    RoomState.Destabilized => Color.Lerp(SwitchDestabilizedColor, SeamRevealColor, guidancePulse * 0.30f),
                     RoomState.ShadowRevealed => SwitchRevealColor,
                     RoomState.Completed => SwitchCompletedColor,
                     _ => SwitchUnresolvedColor
@@ -334,6 +399,56 @@ namespace ADoorInsideTheDark.Rooms
 
                 _switchHandle.localRotation = _switchHandleBaseRotation * Quaternion.Euler(angle, 0f, 0f);
             }
+        }
+
+        private void TriggerBlockedShadowFeedback()
+        {
+            _blockedFeedbackTimer = _blockedFeedbackDuration;
+            PlayClarityCue(GetBlockedShadowCue(), _shadowBlockedCueVolume);
+            Debug.Log("[HouseWithTheSwitches] Shadow perception found nothing before the room was destabilized.", this);
+        }
+
+        private void PlayClarityCue(AudioClip clip, float volume)
+        {
+            if (_clarityAudioSource == null || clip == null)
+            {
+                return;
+            }
+
+            _clarityAudioSource.PlayOneShot(clip, volume);
+        }
+
+        private AudioClip GetBlockedShadowCue()
+        {
+            if (_shadowBlockedCue != null)
+            {
+                return _shadowBlockedCue;
+            }
+
+            _generatedBlockedCue ??= ShadowAudioClipFactory.CreatePerceptionBlockedCue();
+            return _generatedBlockedCue;
+        }
+
+        private AudioClip GetDestabilizedGuidanceCue()
+        {
+            if (_destabilizedGuidanceCue != null)
+            {
+                return _destabilizedGuidanceCue;
+            }
+
+            _generatedDestabilizedGuidanceCue ??= ShadowAudioClipFactory.CreateDestabilizedGuidanceCue();
+            return _generatedDestabilizedGuidanceCue;
+        }
+
+        private static void DestroyGeneratedClip(ref AudioClip clip)
+        {
+            if (clip == null)
+            {
+                return;
+            }
+
+            Destroy(clip);
+            clip = null;
         }
 
         private bool IsShadowPerceptionActive()

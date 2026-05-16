@@ -1,5 +1,173 @@
 # Build Log
 
+## 2026-05-16 - Wave 009B: Shadow Perception Player-Clarity Pass
+
+### Summary
+
+Added a small scene-local clarity pass to Wave 007B so first-time testers get subtle feedback when Shadow perception is used too early, then receive a small room-change cue after the ordinary switch destabilizes the space, without changing the room’s completion logic or touching the core player controller scripts.
+
+### Files Changed
+
+- `Assets/_Project/Code/Rooms/HouseWithTheSwitchesController.cs`
+- `Assets/_Project/Code/Shadow/ShadowAudioClipFactory.cs`
+- `Assets/_Project/Code/Editor/Wave007BHouseWithTheSwitchesSetup.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Extended `HouseWithTheSwitchesController` with a pre-destabilization Shadow feedback path so holding `Q` before the room changes now produces a subtle blocked response instead of silent non-response.
+- Updated the room’s debug overlay text so the sequence is clearer: the unresolved state now tells the player to use the ordinary switch first, the blocked state briefly reinforces “not yet,” and the destabilized state more clearly points the player back toward Shadow and the back wall.
+- Added a short post-destabilization guidance window in `HouseWithTheSwitchesController` so the room briefly emphasizes that something has changed and Shadow perception is now relevant.
+- Added two generated fallback clips in `ShadowAudioClipFactory` for the blocked Shadow cue and the destabilized guidance cue, keeping the pass self-contained without importing external audio assets.
+- Updated `ADITD/Setup/Recreate Wave 007B House With the Switches` so regenerated Wave 007B scenes automatically add and assign a room-local `AudioSource` for the new clarity cues.
+- Preserved the existing Wave 009A behavior: before destabilization the seam still does not reveal, after destabilization holding `Q` still reveals it, and interacting while the seam is revealed still completes the room.
+
+### Menu Path
+
+- `ADITD/Setup/Recreate Wave 007B House With the Switches`
+
+### Tool Purpose
+
+- Recreates the dedicated Wave 007B graybox scene from scratch with the Wave 009B blocked-feedback and post-destabilization clarity cues already wired.
+
+### Created or Updated Assets
+
+- Recreates `Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity` when the menu command is run in the Unity Editor.
+
+### Manual Test Steps
+
+1. Open Unity and allow scripts to import.
+2. Confirm no Unity Console compile errors after import.
+3. Run `ADITD/Setup/Recreate Wave 007B House With the Switches`.
+4. Enter Play Mode.
+5. Hold `Q` before touching the switch.
+6. Confirm the seam does not reveal and the player receives subtle blocked or empty-perception feedback through the room overlay and cue.
+7. Press `E` on the ordinary switch.
+8. Confirm the room destabilizes and gives a small cue that Shadow perception is now relevant.
+9. Hold `Q`.
+10. Confirm the seam reveals cleanly with the existing Wave 009A reveal behavior and audio.
+11. Release `Q` and confirm the seam hides cleanly.
+12. Hold `Q` again and complete the room normally.
+13. Stop Play Mode and confirm no console errors, null-reference warnings, missing scripts, or broken serialized references.
+
+### Manual Unity Validation Steps
+
+1. Run `ADITD/Setup/Recreate Wave 007B House With the Switches`.
+2. Select the root `Wave007B_HouseWithTheSwitches` object and confirm `HouseWithTheSwitchesController` is present.
+3. On the room root, confirm an `AudioSource` is present and assigned to `HouseWithTheSwitchesController`’s `_clarityAudioSource`.
+4. Confirm the room root still has its `_shadowPerception`, `_hiddenSeamRevealable`, and other existing scene references assigned.
+5. Select `HiddenSeamRoot` and confirm `ShadowRevealable` is still present with its reveal audio source assigned.
+6. Confirm no missing scripts or broken serialized references are present after the setup menu finishes.
+
+### Known Limitations
+
+- This pass still relies on the Wave 007B debug overlay for textual clarity; it does not add a separate tutorial or prompt framework.
+- The new blocked and destabilized cues are still prototype-only and use generated fallback audio when no authored clips are assigned.
+- Interaction prompt text remains generic; the added clarity is delivered through room-local overlay, audio, and light-color feedback instead.
+- No Shadow Charge.
+- No audio mixer routing, authored ambience layering, or broader horror polish pass.
+- No pressure integration.
+- No full form switching.
+- No split-screen or third-person Shadow proxy.
+- No save/load or Hearth interaction.
+- Rerunning `ADITD/Setup/Recreate Wave 007B House With the Switches` rebuilds the Wave 007B graybox scene from scratch and does not preserve manual scene tweaks.
+- Headless Unity scene generation is still avoided because of the prior local `Unity.Licensing.Client.exe` exception.
+
+### Rollback Notes
+
+- Revert `Assets/_Project/Code/Rooms/HouseWithTheSwitchesController.cs`.
+- Revert `Assets/_Project/Code/Shadow/ShadowAudioClipFactory.cs`.
+- Revert `Assets/_Project/Code/Editor/Wave007BHouseWithTheSwitchesSetup.cs`.
+- Remove the Wave 009B entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 009A: Real Shadow Perception Input + Audio Feedback Pass
+
+### Summary
+
+Moved Wave 007B Shadow Perception off the temporary direct-key polling path and onto the project’s real `ADITDControls` Input Actions asset, then added minimal scene-local audio feedback so entering Shadow perception, revealing the seam, and releasing perception all give subtle audible confirmation without changing room completion logic.
+
+### Files Changed
+
+- `Assets/_Project/Settings/InputActions/Resources/ADITDControls.inputactions`
+- `Assets/_Project/Code/Shadow/ShadowPerceptionController.cs`
+- `Assets/_Project/Code/Shadow/ShadowRevealable.cs`
+- `Assets/_Project/Code/Shadow/ShadowAudioClipFactory.cs`
+- `Assets/_Project/Code/Editor/Wave007BHouseWithTheSwitchesSetup.cs`
+- `Docs/DECISIONS.md`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Added a real `ShadowPerception` button action to the `Player` map in `ADITDControls.inputactions` and bound it to `Q`, preserving the current keyboard expectation while moving the feature onto the project-owned Input Actions asset.
+- Added a dated authorization note to `Docs/DECISIONS.md` so the minimal Wave 009A input-and-audio expansion is documented against Wave 008A’s earlier non-goals.
+- Reworked `ShadowPerceptionController` to load and read the `Player/ShadowPerception` action through the same `PlayerInputActionsLoader` path used by the existing player movement, look, and interact scripts.
+- Added small activation and release cues to `ShadowPerceptionController`, with generated fallback clips used when no authored clips are assigned, so the wave stays audible without importing external assets.
+- Added reveal-loop audio support to `ShadowRevealable`, including generated fallback tone creation plus fade-in and fade-out behavior so the seam’s audible layer starts when it becomes visible and stops cleanly when perception ends.
+- Updated `ADITD/Setup/Recreate Wave 007B House With the Switches` so regenerated Wave 007B scenes automatically add and wire scene-local `AudioSource` components for the player perception cue and the seam reveal layer.
+- Preserved existing Shadow reveal gating, one-time missing-controller warning behavior, and the room’s completion flow.
+
+### Menu Path
+
+- `ADITD/Setup/Recreate Wave 007B House With the Switches`
+
+### Tool Purpose
+
+- Recreates the dedicated Wave 007B graybox scene from scratch with the real `Player/ShadowPerception` input path and the minimal Shadow perception audio wiring already in place.
+
+### Created or Updated Assets
+
+- Recreates `Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity` when the menu command is run in the Unity Editor.
+
+### Manual Test Steps
+
+1. Open Unity and allow scripts to import.
+2. Confirm no Unity Console compile errors after import.
+3. Run `ADITD/Setup/Recreate Wave 007B House With the Switches`.
+4. Enter Play Mode.
+5. Hold `Q`.
+6. Confirm Shadow perception activates from the real Input Actions binding and a subtle entry cue plays.
+7. Before destabilizing the room, confirm the seam still does not reveal while `Q` is held.
+8. Press `E` on the ordinary switch to destabilize the room.
+9. Hold `Q` again and confirm the seam reveals cleanly and the reveal tone/layer becomes audible.
+10. Release `Q` and confirm the seam hides cleanly and the reveal audio stops or fades out without console errors.
+11. Hold `Q` again, then press `E` on the same switch and confirm the room still completes exactly as before.
+12. Stop Play Mode and confirm no console errors, null-reference warnings, missing scripts, or broken serialized references.
+
+### Manual Unity Validation Steps
+
+1. Run `ADITD/Setup/Recreate Wave 007B House With the Switches`.
+2. Select the generated `Player` object and confirm `ShadowPerceptionController` is present.
+3. On the generated `Player`, confirm an `AudioSource` is present and assigned to `ShadowPerceptionController`’s `_perceptionAudioSource`.
+4. Select `HiddenSeamRoot` and confirm `ShadowRevealable` is present.
+5. On `HiddenSeamRoot`, confirm an `AudioSource` is present and assigned to `ShadowRevealable`’s `_revealAudioSource`.
+6. Confirm `ShadowRevealable` still has its visibility-toggle renderer references assigned and its tint renderer list intentionally empty for the seam setup.
+7. Select the root `Wave007B_HouseWithTheSwitches` object and confirm `HouseWithTheSwitchesController` still has its `_shadowPerception` reference assigned.
+8. Confirm no missing scripts or broken serialized references are present after the setup menu finishes.
+
+### Known Limitations
+
+- The new `ShadowPerception` action is currently bound only to keyboard `Q`; broader rebinding or additional device parity is still out of scope.
+- Audio remains prototype-only and uses generated fallback tones when no authored clips are assigned.
+- Shadow perception remains visual-only apart from the minimal feedback cues added in this pass.
+- No Shadow Charge.
+- No audio mixer routing, authored ambience layering, or broader horror polish pass.
+- No pressure integration.
+- No full form switching.
+- No split-screen or third-person Shadow proxy.
+- No save/load or Hearth interaction.
+- Rerunning `ADITD/Setup/Recreate Wave 007B House With the Switches` rebuilds the Wave 007B graybox scene from scratch and does not preserve manual scene tweaks.
+- Headless Unity scene generation is still avoided because of the prior local `Unity.Licensing.Client.exe` exception.
+
+### Rollback Notes
+
+- Revert `Assets/_Project/Settings/InputActions/Resources/ADITDControls.inputactions`.
+- Revert `Assets/_Project/Code/Shadow/ShadowPerceptionController.cs`.
+- Revert `Assets/_Project/Code/Shadow/ShadowRevealable.cs`.
+- Delete or revert `Assets/_Project/Code/Shadow/ShadowAudioClipFactory.cs`.
+- Revert `Assets/_Project/Code/Editor/Wave007BHouseWithTheSwitchesSetup.cs`.
+- Revert `Docs/DECISIONS.md`.
+- Remove the Wave 009A entry from the top of `Docs/BUILD_LOG.md`.
+
 ## 2026-05-16 - Wave 008A-FixPass: Shadow Perception MVP Audit Fixes
 
 ### Summary

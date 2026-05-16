@@ -2,6 +2,29 @@
 
 Living log of agreed defaults for **A Door Inside the Dark**. Unity-first, clean-room assumptions unless noted.
 
+## 2026-05-16 - Wave 009A Shadow Perception Input + Audio Pass Authorized
+
+Decision:
+Authorize Wave 009A as the smallest follow-up to Wave 008A for real input binding and minimal feedback audio.
+
+Scope:
+- Route Shadow perception through the project `ADITDControls` Input Actions asset.
+- Preserve `Q` as the current keyboard binding unless the project action asset says otherwise.
+- Add subtle activation, reveal, and release audio feedback for the existing Wave 007B seam flow.
+- Keep room completion logic unchanged.
+- Use scene-local wiring and local `AudioSource` references only.
+
+Non-goals:
+- No new gameplay systems.
+- No global audio manager or singleton.
+- No full Ego/Shadow form switching.
+- No Shadow Charge.
+- No new rooms or scenes.
+- No save/load, Hearth, Witnesses, or broader audio polish pass.
+
+Justification:
+Wave 008A proved the perception-state flow. Wave 009A makes that flow use the project-owned input path and gives the existing reveal readable feedback without widening the room or player-controller scope.
+
 ## 2026-05-16 - Wave 008A Shadow Perception MVP Authorized
 
 Decision:

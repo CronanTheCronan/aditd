@@ -10,15 +10,24 @@ namespace ADoorInsideTheDark.Shadow
         [SerializeField] private Renderer[] _renderersToTint;
         [SerializeField] private Color _activeTint = new(0.44f, 0.81f, 0.89f, 1f);
 
+        [Header("Audio Feedback")]
+        [SerializeField] private AudioSource _revealAudioSource;
+        [SerializeField] private AudioClip _revealLoopClip;
+        [SerializeField] private float _revealLoopVolume = 0.14f;
+        [SerializeField] private float _revealFadeSpeed = 2.75f;
+
         private Color[] _cachedInactiveColors;
         private bool _shadowPerceptionActive;
         private bool _forceReveal;
         private bool _revealAllowed = true;
         private bool _hasLoggedMissingControllerWarning;
+        private bool _isCurrentlyRevealed;
+        private AudioClip _generatedRevealLoopClip;
 
         private void Awake()
         {
             AutoAssignController(logWarningIfMissing: true);
+            AutoAssignRevealAudioSource();
             CacheInactiveColors();
             RefreshVisualState();
         }
@@ -26,18 +35,35 @@ namespace ADoorInsideTheDark.Shadow
         private void OnEnable()
         {
             AutoAssignController(logWarningIfMissing: true);
+            AutoAssignRevealAudioSource();
             _controller?.RegisterRevealable(this);
             RefreshVisualState();
+        }
+
+        private void Update()
+        {
+            UpdateRevealAudioFade();
         }
 
         private void OnDisable()
         {
             _controller?.UnregisterRevealable(this);
+            StopRevealAudioImmediately();
+        }
+
+        private void OnDestroy()
+        {
+            if (_generatedRevealLoopClip != null)
+            {
+                Destroy(_generatedRevealLoopClip);
+                _generatedRevealLoopClip = null;
+            }
         }
 
         private void OnValidate()
         {
             AutoAssignController(logWarningIfMissing: false);
+            AutoAssignRevealAudioSource();
         }
 
         public void SetShadowPerceptionActive(bool isActive)
@@ -97,6 +123,14 @@ namespace ADoorInsideTheDark.Shadow
             _hasLoggedMissingControllerWarning = true;
         }
 
+        private void AutoAssignRevealAudioSource()
+        {
+            if (_revealAudioSource == null)
+            {
+                _revealAudioSource = GetComponent<AudioSource>();
+            }
+        }
+
         private void CacheInactiveColors()
         {
             if (_renderersToTint == null)
@@ -118,6 +152,7 @@ namespace ADoorInsideTheDark.Shadow
         private void RefreshVisualState()
         {
             bool shouldReveal = _forceReveal || (_revealAllowed && _shadowPerceptionActive);
+            UpdateRevealAudioState(shouldReveal);
 
             if (_objectsToToggle != null)
             {
@@ -159,6 +194,79 @@ namespace ADoorInsideTheDark.Shadow
                 Color inactiveColor = i < _cachedInactiveColors.Length ? _cachedInactiveColors[i] : Color.white;
                 renderer.material.color = shouldReveal ? _activeTint : inactiveColor;
             }
+        }
+
+        private void UpdateRevealAudioState(bool shouldReveal)
+        {
+            if (_isCurrentlyRevealed == shouldReveal)
+            {
+                return;
+            }
+
+            _isCurrentlyRevealed = shouldReveal;
+            if (!shouldReveal || _revealAudioSource == null)
+            {
+                return;
+            }
+
+            AudioClip loopClip = GetRevealLoopClip();
+            if (loopClip == null)
+            {
+                return;
+            }
+
+            if (_revealAudioSource.clip != loopClip)
+            {
+                _revealAudioSource.clip = loopClip;
+            }
+
+            if (!_revealAudioSource.isPlaying)
+            {
+                _revealAudioSource.volume = 0f;
+                _revealAudioSource.loop = true;
+                _revealAudioSource.Play();
+            }
+        }
+
+        private void UpdateRevealAudioFade()
+        {
+            if (_revealAudioSource == null)
+            {
+                return;
+            }
+
+            float targetVolume = _isCurrentlyRevealed ? _revealLoopVolume : 0f;
+            _revealAudioSource.volume = Mathf.MoveTowards(
+                _revealAudioSource.volume,
+                targetVolume,
+                _revealFadeSpeed * Time.deltaTime);
+
+            if (!_isCurrentlyRevealed && _revealAudioSource.isPlaying && _revealAudioSource.volume <= 0.001f)
+            {
+                _revealAudioSource.Stop();
+            }
+        }
+
+        private void StopRevealAudioImmediately()
+        {
+            if (_revealAudioSource == null)
+            {
+                return;
+            }
+
+            _revealAudioSource.Stop();
+            _revealAudioSource.volume = 0f;
+        }
+
+        private AudioClip GetRevealLoopClip()
+        {
+            if (_revealLoopClip != null)
+            {
+                return _revealLoopClip;
+            }
+
+            _generatedRevealLoopClip ??= ShadowAudioClipFactory.CreateRevealLoop();
+            return _generatedRevealLoopClip;
         }
     }
 }

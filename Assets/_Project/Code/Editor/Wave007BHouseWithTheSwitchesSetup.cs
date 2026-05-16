@@ -97,6 +97,10 @@ namespace ADoorInsideTheDark.Editor
             CreatePrimitive(seamRoot.transform, "SeamPath", PrimitiveType.Cube, new Vector3(0f, 0.11f, 1.45f), new Vector3(0.08f, 0.03f, 4.40f));
             SetCollidersEnabled(seamRoot, false);
             ShadowRevealable seamRevealable = seamRoot.AddComponent<ShadowRevealable>();
+            AudioSource seamRevealAudioSource = seamRoot.AddComponent<AudioSource>();
+            ConfigureRevealAudioSource(seamRevealAudioSource);
+            AudioSource roomClarityAudioSource = parent.gameObject.AddComponent<AudioSource>();
+            ConfigureClarityAudioSource(roomClarityAudioSource);
 
             GameObject completionMarker = CreatePrimitive(parent, "CompletionMarker", PrimitiveType.Cube, new Vector3(0f, 1.5f, -3.45f), new Vector3(1.4f, 2.2f, 0.12f));
             completionMarker.GetComponent<Collider>().enabled = false;
@@ -123,6 +127,7 @@ namespace ADoorInsideTheDark.Editor
             controllerSo.FindProperty("_hiddenSeamRevealable").objectReferenceValue = seamRevealable;
             controllerSo.FindProperty("_completionMarker").objectReferenceValue = completionMarker;
             controllerSo.FindProperty("_shadowPerception").objectReferenceValue = shadowPerception;
+            controllerSo.FindProperty("_clarityAudioSource").objectReferenceValue = roomClarityAudioSource;
             SetObjectArray(
                 controllerSo.FindProperty("_roomRenderers"),
                 floor.GetComponent<Renderer>(),
@@ -152,6 +157,7 @@ namespace ADoorInsideTheDark.Editor
             SetObjectArray(
                 seamRevealableSo.FindProperty("_renderersToTint"),
                 System.Array.Empty<Object>());
+            seamRevealableSo.FindProperty("_revealAudioSource").objectReferenceValue = seamRevealAudioSource;
             seamRevealableSo.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -200,6 +206,13 @@ namespace ADoorInsideTheDark.Editor
             {
                 controller = player.AddComponent<ShadowPerceptionController>();
             }
+
+            AudioSource perceptionAudioSource = player.AddComponent<AudioSource>();
+            ConfigurePerceptionAudioSource(perceptionAudioSource);
+
+            SerializedObject controllerSo = new(controller);
+            controllerSo.FindProperty("_perceptionAudioSource").objectReferenceValue = perceptionAudioSource;
+            controllerSo.ApplyModifiedPropertiesWithoutUndo();
 
             return controller;
         }
@@ -252,6 +265,45 @@ namespace ADoorInsideTheDark.Editor
             {
                 arrayProperty.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
             }
+        }
+
+        private static void ConfigurePerceptionAudioSource(AudioSource audioSource)
+        {
+            if (audioSource == null)
+            {
+                return;
+            }
+
+            audioSource.playOnAwake = false;
+            audioSource.loop = false;
+            audioSource.spatialBlend = 0f;
+            audioSource.volume = 1f;
+        }
+
+        private static void ConfigureRevealAudioSource(AudioSource audioSource)
+        {
+            if (audioSource == null)
+            {
+                return;
+            }
+
+            audioSource.playOnAwake = false;
+            audioSource.loop = true;
+            audioSource.spatialBlend = 0f;
+            audioSource.volume = 0f;
+        }
+
+        private static void ConfigureClarityAudioSource(AudioSource audioSource)
+        {
+            if (audioSource == null)
+            {
+                return;
+            }
+
+            audioSource.playOnAwake = false;
+            audioSource.loop = false;
+            audioSource.spatialBlend = 0f;
+            audioSource.volume = 1f;
         }
     }
 }
