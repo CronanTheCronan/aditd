@@ -2,6 +2,27 @@
 
 Living log of agreed defaults for **A Door Inside the Dark**. Unity-first, clean-room assumptions unless noted.
 
+## 2026-05-16 - Wave 010B/010C Weight of the Door Vertical-Slice Authorization
+
+Decision:
+Authorize `room.main_floor.weight_of_door` as the first real graybox vertical-slice room behavior.
+
+Scope:
+- Use scene-local room controller architecture for this room.
+- Reuse Wave 009 Shadow perception and reveal patterns.
+- Shadow reveal for structural secrets should generally become relevant after ordinary interaction establishes resistance, unless a later room explicitly authorizes a different pattern.
+- Allow minimal room-local pressure-like feedback without introducing the full Pressure system.
+- Keep the Green Thermos as the survived anchor marker for this graybox loop.
+- Keep the Snow Owl as a subtle Witness vignette only, not a new system.
+
+Deferred:
+- Full Pressure.
+- Full Focus Memory.
+- Hearth onboarding.
+- Save/load.
+- Active Split / Tear.
+- Form-switching UI.
+
 ## 2026-05-16 - Wave 009A Shadow Perception Input + Audio Pass Authorized
 
 Decision:

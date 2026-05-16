@@ -2,11 +2,11 @@ using UnityEngine;
 
 namespace ADoorInsideTheDark.Shadow
 {
-    internal static class ShadowAudioClipFactory
+    public static class ShadowAudioClipFactory
     {
         private const int SampleRate = 44100;
 
-        internal static AudioClip CreatePerceptionEnterCue()
+        public static AudioClip CreatePerceptionEnterCue()
         {
             return CreateOneShotClip(
                 "ShadowPerceptionEnterCue",
@@ -19,7 +19,7 @@ namespace ADoorInsideTheDark.Shadow
                 });
         }
 
-        internal static AudioClip CreatePerceptionExitCue()
+        public static AudioClip CreatePerceptionExitCue()
         {
             return CreateOneShotClip(
                 "ShadowPerceptionExitCue",
@@ -32,7 +32,7 @@ namespace ADoorInsideTheDark.Shadow
                 });
         }
 
-        internal static AudioClip CreateRevealLoop()
+        public static AudioClip CreateRevealLoop()
         {
             int sampleCount = Mathf.CeilToInt(SampleRate * 0.5f);
             AudioClip clip = AudioClip.Create("ShadowRevealLoop", sampleCount, 1, SampleRate, false);
@@ -50,7 +50,7 @@ namespace ADoorInsideTheDark.Shadow
             return clip;
         }
 
-        internal static AudioClip CreatePerceptionBlockedCue()
+        public static AudioClip CreatePerceptionBlockedCue()
         {
             return CreateOneShotClip(
                 "ShadowPerceptionBlockedCue",
@@ -63,7 +63,7 @@ namespace ADoorInsideTheDark.Shadow
                 });
         }
 
-        internal static AudioClip CreateDestabilizedGuidanceCue()
+        public static AudioClip CreateDestabilizedGuidanceCue()
         {
             return CreateOneShotClip(
                 "ShadowDestabilizedGuidanceCue",

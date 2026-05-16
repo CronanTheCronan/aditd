@@ -1,5 +1,302 @@
 # Build Log
 
+## 2026-05-16 - Wave 010D: Weight of the Door Archive + Checklist Sync
+
+### Summary
+
+Captured Gemini Notebook's Wave 010B/010C archive summary and synced the project docs so `Weight of the Door` is recognized as the first verified playable vertical-slice room behavior, without changing runtime content.
+
+### Files Changed
+
+- `Docs/AGENT_REPORTS/Waves010B_010C_Gemini_Archive.md`
+- `Docs/BUILD_LOG.md`
+- `Docs/DECISIONS.md`
+
+### What Was Updated
+
+- Added `Docs/AGENT_REPORTS/Waves010B_010C_Gemini_Archive.md` with the verified room, puzzle, lore, continuity, source-safety, and player-clarity archive summary for Waves 010B/010C.
+- Added one short line under the existing Wave 010B/010C decision to capture Gemini's sequenced-relevancy guidance without duplicating the authorization entry.
+- Confirmed no suitable Steam/prototype checklist markdown file is present in the repo for a small target update, so no checklist file was changed in this docs-only wave.
+- Confirmed no suitable existing markdown blueprint-notes file for the older Encounter 1 version is present; the legacy blueprint/PDF gap remains and is superseded by the Wave 010A-010D docs set.
+
+### Manual Validation Steps
+
+1. Open `Docs/AGENT_REPORTS/Waves010B_010C_Gemini_Archive.md`.
+2. Confirm it records the verified room, puzzle, lore, continuity, and player-clarity updates.
+3. Confirm no Steam/prototype checklist markdown file was updated because no suitable file is present in-repo.
+4. Open `Docs/DECISIONS.md`.
+5. Confirm no duplicate decision entry was added.
+6. Confirm the existing Weight of the Door decision now includes the short sequenced-relevancy line.
+7. Confirm no runtime code, scenes, prefabs, or Unity assets were changed.
+
+### Known Limitations
+
+- Docs-only sync.
+- No gameplay implementation.
+- No full rewrite of legacy blueprint PDFs.
+- No suitable Steam/prototype checklist markdown file was present for a contained update.
+- If no markdown blueprint notes file exists, the old PDF remains stale but is superseded by Wave 010A-D docs.
+
+### Rollback Notes
+
+- Delete `Docs/AGENT_REPORTS/Waves010B_010C_Gemini_Archive.md`.
+- Revert `Docs/DECISIONS.md`.
+- Remove the Wave 010D entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 010C: Weight of the Door Cleanup Pass
+
+### Summary
+
+Applied the parked non-blocking cleanup items from the Wave 010B audit/sign-off pass without changing the playable `Weight of the Door` room loop or widening scope.
+
+### Files Changed
+
+- `Assets/_Project/Code/Rooms/WeightOfDoorController.cs`
+- `Assets/_Project/Code/Editor/Wave010BWeightOfDoorSetup.cs`
+- `Assets/_Project/Code/Shadow/ShadowAudioClipFactory.cs`
+- `Docs/BUILD_LOG.md`
+- `Docs/DECISIONS.md`
+
+### What Was Cleaned Up
+
+- Updated `Wave010BWeightOfDoorSetup.AddOrGetShadowPerceptionController` to reuse an existing player `AudioSource` when present and only add one when needed before assigning `_perceptionAudioSource`.
+- Replaced the lone implicit `var rect` in `WeightOfDoorController.OnGUI` with explicit `Rect` syntax.
+- Capped `_doorForceCount` in `WeightOfDoorController.UseDoor` with `Mathf.Min(_doorForceCount + 1, 10)` and preserved the existing first-attempt, reveal, stabilize, and completion behavior.
+- Ensured the Snow Owl vignette resolves to a subtle stable completed color when the room completes, without adding new animation or system behavior.
+- Future-proofed `ShadowAudioClipFactory` accessibility by changing the factory class and its cue-creation methods from `internal` to `public` without redesigning audio generation.
+- Added a dated `Docs/DECISIONS.md` authorization entry documenting Wave 010B/010C as the first real graybox vertical-slice room behavior and restating approved deferrals.
+
+### Manual Test Steps
+
+1. Open Unity and allow scripts to compile.
+2. Run `ADITD/Setup/Recreate Wave 010B Weight of the Door`.
+3. Open `Wave010B_WeightOfTheDoor` and enter Play Mode.
+4. Approach the door and hold `Q` before ever pressing `E`.
+5. While still holding `Q`, press `E` once.
+6. Confirm the room registers the first ordinary attempt and the bindings become visible during that same held-`Q` window.
+7. While the bindings are visibly revealed, press `E` again.
+8. Confirm the stabilize beat and completion only happen after the revealed-bindings moment has been shown first.
+9. After completion, confirm the Green Thermos remains the visible survived anchor and the Snow Owl vignette settles into a subtle neutral/completed state.
+10. Stop Play Mode and confirm no new missing-script, null-reference, or serialized-reference issues appear.
+
+### Manual Unity Validation Steps
+
+1. Run `ADITD/Setup/Recreate Wave 010B Weight of the Door`.
+2. Select the root `Wave010B_WeightOfTheDoor` object.
+3. Confirm `WeightOfDoorController` is present.
+4. Confirm `_doorPanelRenderer` is assigned.
+5. Confirm `_bindingsRevealable` is assigned.
+6. Confirm `_shadowPerception` is assigned.
+7. Confirm `_clarityAudioSource` is assigned.
+8. Confirm `_thermosRoot` is assigned.
+9. Select the door interactable object and confirm `WeightOfDoorInteractable` is present and references the room controller.
+10. Select the bindings root and confirm `ShadowRevealable` is present and hides/reveals correctly in Play Mode.
+
+### Known Limitations
+
+- Graybox only.
+- Prototype `OnGUI` debug overlay.
+- No full Pressure system.
+- No full Focus Memory.
+- No Hearth onboarding.
+- No anchor inventory.
+- No save/load.
+- No final art, lighting, ambience, or authored audio polish.
+- No Active Split / Tear.
+- No form-switching UI.
+- No full vertical-slice reward loop beyond this room stub.
+
+### Rollback Notes
+
+- Revert `Assets/_Project/Code/Rooms/WeightOfDoorController.cs`.
+- Revert `Assets/_Project/Code/Editor/Wave010BWeightOfDoorSetup.cs`.
+- Revert `Assets/_Project/Code/Shadow/ShadowAudioClipFactory.cs`.
+- Revert `Docs/DECISIONS.md`.
+- Remove the Wave 010C entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 010B-FixPass: Weight of the Door Audit Fixes
+
+### Summary
+
+Applied the accepted audit fix for the `Weight of the Door` reveal bypass so holding `Q` through the first door attempt now refreshes binding visibility before stabilization can occur.
+
+### Files Changed
+
+- `Assets/_Project/Code/Rooms/WeightOfDoorController.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Updated `WeightOfDoorController.UseDoor` to call `UpdateBindingPolicy()` immediately after `_doorForceCount++`.
+- This ensures the existing `ShadowRevealable` can begin revealing bindings during the same held-`Q` interaction window after the first ordinary `E` attempt.
+- Logged this contained fix-pass at the top of `Docs/BUILD_LOG.md`.
+
+### Manual Test Steps
+
+1. Open Unity and allow scripts to compile.
+2. Run `ADITD/Setup/Recreate Wave 010B Weight of the Door`.
+3. Open `Wave010B_WeightOfTheDoor` and enter Play Mode.
+4. Approach the door and hold `Q` before ever pressing `E`.
+5. While still holding `Q`, press `E` once.
+6. Confirm the room registers the first ordinary attempt and the bindings become visible during that same held-`Q` window.
+7. While the bindings are visibly revealed, press `E` again.
+8. Confirm the stabilize beat and completion only happen after the revealed-bindings moment has been shown first.
+
+### Known Limitations
+
+- Fix-pass only; no redesign of room flow or room scope.
+- Graybox room and debug overlay remain prototype-level.
+- No scene, prefab, player-controller, Input Actions, or broader Shadow-system changes.
+
+### Rollback Notes
+
+- Revert `Assets/_Project/Code/Rooms/WeightOfDoorController.cs`.
+- Remove the Wave 010B-FixPass entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 010B: Weight of the Door Graybox Implementation
+
+### Summary
+
+Implemented a strict graybox Main Floor hallway for `room.main_floor.weight_of_door` with scene-local state, reused Wave 009 Shadow reveal and interaction patterns, an editor recreate command, and prototype overlay/light/audio feedback. Ordinary `E` alone cannot complete the room; holding `Q` reveals door-frame bindings via `ShadowRevealable`; pressing `E` while Shadow can see bindings runs a short settle beat then completion with the Green Thermos moved to the floor and a subtle Snow Owl vignette.
+
+### Files Changed
+
+- `Assets/_Project/Code/Rooms/WeightOfDoorController.cs`
+- `Assets/_Project/Code/Interaction/WeightOfDoorInteractable.cs`
+- `Assets/_Project/Code/Editor/Wave010BWeightOfDoorSetup.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- `WeightOfDoorController`: room-local states for unresolved, first door attempt, wrong-form escalation, Shadow-relevant guidance, bindings revealed (Shadow hold), short stabilize overlay state, and completion. Wrong-form strain uses hall/door color, light pulse, optional generated fallback audio from `ShadowAudioClipFactory` (destabilized-guidance and blocked-Shadow cues). Bindings use `ShadowRevealable` with reveal gated until at least one ordinary door attempt. `Q` before the first `E` uses the same “blocked” cue pattern as Wave 007B for clarity without revealing bindings.
+- `WeightOfDoorInteractable`: thin `IInteractable` bridge to the controller (same pattern as `HouseSwitchInteractable`).
+- `Wave010BWeightOfDoorSetup`: builds an 8m × 3m hall graybox, player start, heavy door with interactable collider, door-frame binding geometry, overhead light, safe-pocket corner + side table + green thermos cylinder, Snow Owl feather shimmer primitive, wires serialized references, saves the scene.
+
+### Menu Path
+
+- `ADITD/Setup/Recreate Wave 010B Weight of the Door`
+
+### Created or Updated Assets
+
+- Running the menu command in the Unity Editor creates or overwrites: `Assets/_Project/Scenes/Wave010B_WeightOfTheDoor.unity` (not hand-edited in-repo; regenerate via menu).
+
+### Manual Test Steps
+
+1. Open Unity and allow scripts to import.
+2. Confirm no compile errors in the Console.
+3. Run `ADITD/Setup/Recreate Wave 010B Weight of the Door`.
+4. Open `Wave010B_WeightOfTheDoor` and enter Play Mode.
+5. Approach the door; press `E` once — door resists with first-attempt overlay text.
+6. Press `E` again (and optionally repeat) — wrong-form and Shadow-relevant overlays escalate without hard failure; audio should not feel punitive.
+7. Hold `Q` — bindings appear around the frame; release `Q` — bindings hide (until completion).
+8. Hold `Q` again and press `E` — settle beat runs (`State: Stabilized`), then completion: door eases open slightly, hall calms, thermos rests on the floor.
+9. Confirm Snow Owl shimmer is subtle near the safe pocket.
+10. Stop Play Mode; confirm no new errors, missing scripts, or null-reference warnings.
+
+### Known Limitations
+
+- Graybox only; primitives and default materials.
+- Prototype `OnGUI` debug overlay for validation.
+- No full Pressure system.
+- No full Focus Memory.
+- No Hearth onboarding.
+- No anchor inventory.
+- No save/load.
+- No final art, lighting bake, ambience, or authored audio polish.
+- No Active Split / Tear or form-switching UI.
+- No full vertical-slice reward loop beyond this room stub.
+
+### Rollback Notes
+
+- Delete or revert `Assets/_Project/Code/Rooms/WeightOfDoorController.cs`.
+- Delete or revert `Assets/_Project/Code/Interaction/WeightOfDoorInteractable.cs`.
+- Delete or revert `Assets/_Project/Code/Editor/Wave010BWeightOfDoorSetup.cs`.
+- Delete generated scene `Assets/_Project/Scenes/Wave010B_WeightOfTheDoor.unity` if present.
+- Remove the Wave 010B entry from the top of `Docs/BUILD_LOG.md`.
+- Unity may leave orphan `.meta` files for deleted scripts; remove those `.meta` files only if you are fully rolling back the wave and cleaning up.
+
+## 2026-05-16 - Wave 010A-FixPass: Weight of the Door Spec Clarity Edit
+
+### Summary
+
+Applied Gemini Notebook's approved clarity wording update to the `Weight of the Door` spec packet and saved the review summary as an agent report without changing implementation scope.
+
+### Files Changed
+
+- `Docs/ROOM_SPECS/WeightOfTheDoor.md`
+- `Docs/AGENT_REPORTS/Wave010A_Gemini_Review.md`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Updated the Step 8 stabilization debug text in `Docs/ROOM_SPECS/WeightOfTheDoor.md` so `E` reads as an ordinary settling action instead of a forceful follow-up.
+- Added `Docs/AGENT_REPORTS/Wave010A_Gemini_Review.md` with the approved Gemini review summary and implementation handoff note.
+- Logged this documentation-only fix-pass at the top of `Docs/BUILD_LOG.md`.
+
+### Manual Test Steps
+
+1. Open `Docs/ROOM_SPECS/WeightOfTheDoor.md`.
+2. Confirm the `Stabilized` debug overlay line now reads: `Keep steady. While the bindings are revealed, press E to stop forcing and let the door settle.`
+3. Open `Docs/AGENT_REPORTS/Wave010A_Gemini_Review.md`.
+4. Confirm the report includes the verdict, core strengths, key alignment, player-clarity note, and next action.
+5. Confirm no files outside the allowed docs paths were changed for this fix-pass.
+
+### Known Limitations
+
+- Docs-only fix-pass.
+- No room implementation yet.
+- No code, scene, prefab, or input changes.
+
+### Rollback Notes
+
+- Revert `Docs/ROOM_SPECS/WeightOfTheDoor.md`.
+- Delete `Docs/AGENT_REPORTS/Wave010A_Gemini_Review.md`.
+- Remove the Wave 010A-FixPass entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 010A: Weight of the Door Room + Puzzle Spec Packet
+
+### Summary
+
+Created one contained implementation-ready spec packet for `Main Floor / Weight of the Door`, defining the room’s emotional question, graybox layout, reuse checklist, puzzle flow, player-clarity requirements, and follow-up wave boundaries so Cursor can build the first real vertical-slice room without widening scope into systems, additional rooms, or runtime architecture.
+
+### Files Changed
+
+- `Docs/ROOM_SPECS/WeightOfTheDoor.md`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Created `Docs/ROOM_SPECS/WeightOfTheDoor.md` as a self-contained room spec packet for the first real vertical-slice room.
+- Defined the room’s emotional question and one-sentence core loop at the top of the file for immediate handoff clarity.
+- Documented the exact graybox layout, onboarding sequence, room-local puzzle flow, Shadow reveal requirements, ordinary interaction requirements, and debug overlay text requirements.
+- Listed the exact Wave 009-era components and patterns the follow-up room wave should reuse, including `ShadowPerceptionController`, `ShadowRevealable`, `PlayerInteractor`, `IInteractable`, the `HouseWithTheSwitchesController` room-local pattern, the existing debug overlay pattern, and `ShadowAudioClipFactory` fallback audio usage when relevant.
+- Scoped a minimal room-only Pressure stub, one anchor candidate, one optional Witness cue, player clarity risks, source-safety notes, parked ideas, and strict follow-up implementation boundaries.
+- Added a 10-step manual tester checklist ending with the room’s emotional-truth prompt for handoff readiness.
+
+### Manual Validation Steps
+
+1. Open `Docs/ROOM_SPECS/WeightOfTheDoor.md`.
+2. Confirm the file starts with the room’s emotional question and one-sentence core loop.
+3. Confirm it references the exact Wave 009-era components it will reuse.
+4. Confirm it contains the 10-step tester checklist.
+5. Confirm no language promises implementation in this wave.
+6. Confirm the packet is ready for Codex-to-Cursor handoff.
+
+### Known Limitations
+
+- Specs-only wave.
+- No room implementation yet.
+- No full Pressure system.
+- No full Focus Memory implementation.
+- No Hearth onboarding.
+- No save/load.
+- No changes to existing Wave 007B scene or player controller.
+
+### Rollback Notes
+
+- Delete `Docs/ROOM_SPECS/WeightOfTheDoor.md`.
+- Remove the Wave 010A entry from the top of `Docs/BUILD_LOG.md`.
+
 ## 2026-05-16 - Wave 009B: Shadow Perception Player-Clarity Pass
 
 ### Summary
