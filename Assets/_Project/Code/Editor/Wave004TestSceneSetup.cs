@@ -123,8 +123,12 @@ namespace ADoorInsideTheDark.Editor
 
             Undo.RecordObject(promptGo, $"Configure {InteractionPromptName}");
 
-            RectTransform promptRect = promptGo.GetComponent<RectTransform>();
-            StretchAnchors(promptRect);
+            if (!TryGetRequiredRectTransform(promptGo, InteractionPromptName, out RectTransform promptRect))
+            {
+                return;
+            }
+
+            Undo.RecordObject(promptRect, $"Layout {InteractionPromptName}");
             promptRect.anchorMin = new Vector2(0.5f, 0f);
             promptRect.anchorMax = new Vector2(0.5f, 0f);
             promptRect.pivot = new Vector2(0.5f, 0f);
@@ -138,12 +142,15 @@ namespace ADoorInsideTheDark.Editor
                 Debug.Log($"[ADITD Wave004 UI Setup] Added InteractionPromptView to '{InteractionPromptName}'.", promptGo);
             }
 
-            Undo.RecordObject(promptView, $"Assign {nameof(InteractionPromptView)} wiring");
-
             GameObject textGo = FindOrCreateUiChild(promptGo.transform, PromptTextName, $"Create {PromptTextName}");
             Undo.RecordObject(textGo, $"Configure {PromptTextName}");
 
-            RectTransform textRect = textGo.GetComponent<RectTransform>();
+            if (!TryGetRequiredRectTransform(textGo, PromptTextName, out RectTransform textRect))
+            {
+                return;
+            }
+
+            Undo.RecordObject(textRect, $"Layout {PromptTextName}");
             StretchAnchors(textRect);
 
             Text promptUiText = textGo.GetComponent<Text>();
@@ -153,7 +160,7 @@ namespace ADoorInsideTheDark.Editor
                 Debug.Log($"[ADITD Wave004 UI Setup] Added Text to '{PromptTextName}'.", textGo);
             }
 
-            ConfigureUiText(promptUiText, GetDefaultUIFont(), 22, TextAnchor.MiddleCenter, Color.white);
+            ConfigureUiText(promptUiText, GetDefaultUIFont(), 22, TextAnchor.MiddleCenter, Color.white, $"Configure {PromptTextName} Text");
 
             SerializedObject promptSo = new SerializedObject(promptView);
             SerializedProperty rootProp = promptSo.FindProperty("_root");
@@ -168,7 +175,7 @@ namespace ADoorInsideTheDark.Editor
                 promptTextProp.objectReferenceValue = promptUiText;
             }
 
-            promptSo.ApplyModifiedPropertiesWithoutUndo();
+            promptSo.ApplyModifiedProperties();
 
             textGo.SetActive(false);
             Debug.Log($"[ADITD Wave004 UI Setup] Prompt starts hidden ({PromptTextName} inactive).", textGo);
@@ -183,7 +190,12 @@ namespace ADoorInsideTheDark.Editor
 
             Undo.RecordObject(panelGo, $"Configure {InspectionPanelName}");
 
-            RectTransform panelOuterRect = panelGo.GetComponent<RectTransform>();
+            if (!TryGetRequiredRectTransform(panelGo, InspectionPanelName, out RectTransform panelOuterRect))
+            {
+                return;
+            }
+
+            Undo.RecordObject(panelOuterRect, $"Layout {InspectionPanelName}");
             StretchAnchors(panelOuterRect);
 
             InspectionPanelView panelView = panelGo.GetComponent<InspectionPanelView>();
@@ -193,13 +205,16 @@ namespace ADoorInsideTheDark.Editor
                 Debug.Log($"[ADITD Wave004 UI Setup] Added InspectionPanelView to '{InspectionPanelName}'.", panelGo);
             }
 
-            Undo.RecordObject(panelView, $"Assign {nameof(InspectionPanelView)} wiring");
-
             GameObject contentsGo =
                 FindOrCreateUiChild(panelGo.transform, PanelContentsName, $"Create {PanelContentsName}");
             Undo.RecordObject(contentsGo, $"Configure {PanelContentsName}");
 
-            RectTransform contentsRect = contentsGo.GetComponent<RectTransform>();
+            if (!TryGetRequiredRectTransform(contentsGo, PanelContentsName, out RectTransform contentsRect))
+            {
+                return;
+            }
+
+            Undo.RecordObject(contentsRect, $"Layout {PanelContentsName}");
             StretchAnchors(contentsRect);
             contentsRect.anchorMin = new Vector2(0.5f, 0.5f);
             contentsRect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -213,12 +228,18 @@ namespace ADoorInsideTheDark.Editor
                 Debug.Log($"[ADITD Wave004 UI Setup] Added Image to '{PanelContentsName}'.", contentsGo);
             }
 
+            Undo.RecordObject(panelImage, $"Configure {PanelContentsName} Image");
             panelImage.color = new Color(0.08f, 0.08f, 0.1f, 0.94f);
 
             GameObject titleGo = FindOrCreateUiChild(contentsGo.transform, TitleTextName, $"Create {TitleTextName}");
             Undo.RecordObject(titleGo, $"Configure {TitleTextName}");
 
-            RectTransform titleRect = titleGo.GetComponent<RectTransform>();
+            if (!TryGetRequiredRectTransform(titleGo, TitleTextName, out RectTransform titleRect))
+            {
+                return;
+            }
+
+            Undo.RecordObject(titleRect, $"Layout {TitleTextName}");
             titleRect.anchorMin = new Vector2(0f, 0.78f);
             titleRect.anchorMax = new Vector2(1f, 1f);
             titleRect.offsetMin = new Vector2(24f, 0f);
@@ -231,13 +252,19 @@ namespace ADoorInsideTheDark.Editor
                 Debug.Log($"[ADITD Wave004 UI Setup] Added Text to '{TitleTextName}'.", titleGo);
             }
 
-            ConfigureUiText(titleUiText, GetDefaultUIFont(), 28, TextAnchor.UpperLeft, Color.white);
+            ConfigureUiText(titleUiText, GetDefaultUIFont(), 28, TextAnchor.UpperLeft, Color.white, $"Configure {TitleTextName} Text");
+            Undo.RecordObject(titleUiText, $"Configure {TitleTextName} Text Style");
             titleUiText.fontStyle = FontStyle.Bold;
 
             GameObject bodyGo = FindOrCreateUiChild(contentsGo.transform, BodyTextName, $"Create {BodyTextName}");
             Undo.RecordObject(bodyGo, $"Configure {BodyTextName}");
 
-            RectTransform bodyRect = bodyGo.GetComponent<RectTransform>();
+            if (!TryGetRequiredRectTransform(bodyGo, BodyTextName, out RectTransform bodyRect))
+            {
+                return;
+            }
+
+            Undo.RecordObject(bodyRect, $"Layout {BodyTextName}");
             bodyRect.anchorMin = new Vector2(0f, 0f);
             bodyRect.anchorMax = new Vector2(1f, 0.78f);
             bodyRect.offsetMin = new Vector2(24f, 24f);
@@ -250,7 +277,8 @@ namespace ADoorInsideTheDark.Editor
                 Debug.Log($"[ADITD Wave004 UI Setup] Added Text to '{BodyTextName}'.", bodyGo);
             }
 
-            ConfigureUiText(bodyUiText, GetDefaultUIFont(), 20, TextAnchor.UpperLeft, new Color(0.9f, 0.9f, 0.92f));
+            ConfigureUiText(bodyUiText, GetDefaultUIFont(), 20, TextAnchor.UpperLeft, new Color(0.9f, 0.9f, 0.92f), $"Configure {BodyTextName} Text");
+            Undo.RecordObject(bodyUiText, $"Configure {BodyTextName} Text Overflow");
             bodyUiText.horizontalOverflow = HorizontalWrapMode.Wrap;
             bodyUiText.verticalOverflow = VerticalWrapMode.Truncate;
 
@@ -273,7 +301,7 @@ namespace ADoorInsideTheDark.Editor
                 bodyProp.objectReferenceValue = bodyUiText;
             }
 
-            panelSo.ApplyModifiedPropertiesWithoutUndo();
+            panelSo.ApplyModifiedProperties();
 
             contentsGo.SetActive(false);
             Debug.Log($"[ADITD Wave004 UI Setup] Inspection panel starts hidden ({PanelContentsName} inactive).", contentsGo);
@@ -513,8 +541,30 @@ namespace ADoorInsideTheDark.Editor
             rectTransform.localScale = Vector3.one;
         }
 
-        private static void ConfigureUiText(Text text, Font font, int size, TextAnchor alignment, Color color)
+        private static bool TryGetRequiredRectTransform(GameObject target, string objectName, out RectTransform rectTransform)
         {
+            rectTransform = target.GetComponent<RectTransform>();
+            if (rectTransform != null)
+            {
+                return true;
+            }
+
+            Debug.LogWarning(
+                $"[ADITD Wave004 UI Setup] Expected '{objectName}' to have a RectTransform; skipping layout and wiring for this object.",
+                target);
+            return false;
+        }
+
+        private static void ConfigureUiText(
+            Text text,
+            Font font,
+            int size,
+            TextAnchor alignment,
+            Color color,
+            string undoLabel)
+        {
+            Undo.RecordObject(text, undoLabel);
+
             if (font == null)
             {
                 Debug.LogWarning(

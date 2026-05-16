@@ -42,10 +42,7 @@ namespace ADoorInsideTheDark.Interaction
             _renderer ??= GetComponent<Renderer>();
             Debug.Log($"[InspectableDebugObject] Interacted with '{gameObject.name}'.", this);
 
-            if (_renderer != null)
-            {
-                _renderer.material.color = _interactedColor;
-            }
+            ApplyColor(_interactedColor, useSharedMaterial: false);
         }
 
         private void ApplyStartupTintToRenderer()
@@ -56,7 +53,23 @@ namespace ADoorInsideTheDark.Interaction
                 return;
             }
 
-            _renderer.material.color = _startupTint;
+            ApplyColor(_startupTint, useSharedMaterial: !Application.isPlaying);
+        }
+
+        private void ApplyColor(Color color, bool useSharedMaterial)
+        {
+            if (_renderer == null)
+            {
+                return;
+            }
+
+            Material targetMaterial = useSharedMaterial ? _renderer.sharedMaterial : _renderer.material;
+            if (targetMaterial == null)
+            {
+                return;
+            }
+
+            targetMaterial.color = color;
         }
 
         private void OnValidate()

@@ -13,11 +13,51 @@
 
 ---
 
+## 2026-05-16 - Wave 006B: Edit-mode material leak warning fix
+
+### Summary
+
+Contained fix for the `InspectableDebugObject` editor warning caused by `renderer.material` during `OnValidate`. Edit-mode startup tint now applies through `sharedMaterial`, while Play Mode interaction tint still uses an instance material.
+
+### Files Changed
+
+- `Assets/_Project/Code/Interaction/InspectableDebugObject.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Added a small shared helper for tint application in `InspectableDebugObject`.
+- Changed startup tint application to use `Renderer.sharedMaterial` when not playing, preventing Unity from instantiating leaked scene materials during edit-time validation.
+- Kept runtime interact feedback on `Renderer.material` so Play Mode color changes remain instance-local.
+
+### Manual Test Steps
+
+1. In Unity, select `InspectableDebugCube` in `Test_FirstPersonController`.
+2. Confirm the Console no longer logs `Instantiating material due to calling renderer.material during edit mode` when the object validates or after rerunning `ADITD/Setup/Wave 004 Test UI`.
+3. Enter Play Mode, look at `InspectableDebugCube`, and press `E`.
+4. Confirm the object still changes to the interacted tint and the inspection UI behavior is unchanged.
+
+### Known Limitations
+
+- Edit-mode tinting now affects the shared material reference on the renderer, which is appropriate for this scene-local debug object but would need a different approach for authored shared materials intended to stay untouched.
+
+### Rollback Notes
+
+- Revert `Assets/_Project/Code/Interaction/InspectableDebugObject.cs`.
+- Remove this build log entry.
+
+
+---
+
 ## 2026-05-15 - Wave 006: Editor Setup Helper for Wave 004 Test UI
 
 ### Summary
 
 Editor-only setup command that programmatically builds or rewires legacy `UnityEngine.UI` Canvas prompts and inspection panels in the active scene, assigns `PlayerInteractor` references via `SerializedObject`, and optionally spawns `InspectableDebugCube` when no `IInspectable` exists. Idempotent-by-name reuse; no gameplay, runtime `UnityEditor`, TextMeshPro, or additional tooling.
+
+### Wave 006 Fix Pass Note
+
+Accepted Claude audit fixes applied in a contained pass: removed a dead prompt-layout call, aligned UI view wiring with undoable `SerializedObject.ApplyModifiedProperties()`, added `Undo.RecordObject` coverage for actual `RectTransform` / `Text` / `Image` mutations, and added null-safe `RectTransform` guards so malformed existing named UI objects warn and skip instead of throwing.
 
 ### Files Changed
 
@@ -67,6 +107,7 @@ Creates **scene-local** GameObjects in the scene you open (not new `.prefab`/`.a
 - **Duplicates:** Naming discipline (`ADITD_TestCanvas`, etc.) avoids junk; oddly named clones outside this naming are ignored.
 - **Assignment scope:** Finds the **first** `InteractionPromptView` / `InspectionPanelView` under the scene roots; ambiguous multi-UI setups are out of Wave scope.
 - **`PanelContents`** is an extra hierarchy node required so `InspectionPanelView` can toggle visibility **without disabling** the host `InspectionPanel` GameObject script.
+- No EventSystem is created; Unity may log a missing-EventSystem warning during Play Mode. Manually add an EventSystem to the scene if this is disruptive.
 
 ### Rollback Notes
 
