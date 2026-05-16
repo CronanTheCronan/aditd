@@ -1,5 +1,194 @@
 # Build Log
 
+## 2026-05-16 - Wave 007B: House With the Switches Graybox Prototype
+
+### Summary
+
+Implemented a contained Wave 007B graybox prototype path for **House With the Switches** using one scene-local room controller, one ordinary switch interactable, one temporary local Shadow perception placeholder, and one dedicated editor setup command that builds the graybox scene without touching player architecture or shared puzzle frameworks.
+
+### Files Changed
+
+- `Assets/_Project/Code/Rooms/HouseWithTheSwitchesController.cs`
+- `Assets/_Project/Code/Interaction/HouseSwitchInteractable.cs`
+- `Assets/_Project/Code/Editor/Wave007BHouseWithTheSwitchesSetup.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Added `HouseWithTheSwitchesController` as a scene-local room state controller with four bounded states: `Unresolved`, `Destabilized`, `ShadowRevealed`, and `Completed`.
+- Implemented Ego-only wrong-form feedback on the ordinary switch through reversible light instability, room tint shift, switch feedback, and clear local overlay messaging.
+- Implemented a temporary local MVP Shadow perception placeholder on `Q` so no shared Shadow system, player controller rewrite, or input-asset change was required for this wave.
+- Implemented one integrated completion action: destabilize the room with the ordinary switch, reveal the hidden seam while holding Shadow perception, then interact with the same switch again to settle the room.
+- Added `HouseSwitchInteractable` so the ordinary switch stays explicit and reusable only at the scene level, without moving puzzle behavior into player scripts.
+- Added editor tooling at `ADITD/Setup/Wave 007B House With the Switches` to create or refresh a dedicated graybox scene with:
+  - one boxed room
+  - one ordinary wall switch
+  - one hidden seam/path reveal
+  - one completion marker
+  - one instantiated player prefab
+- Verified the new runtime and editor C# compile successfully with isolated local build outputs outside Unity’s locked temp targets.
+
+### Menu Path
+
+- `ADITD/Setup/Wave 007B House With the Switches`
+
+### Tool Purpose
+
+- Creates or refreshes the dedicated Wave 007B graybox scene without hand-editing Unity YAML and limits scene writes to the Wave 007B scene only.
+
+### Created or Updated Assets
+
+- Creates or refreshes `Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity` when the menu command is run in the Unity Editor.
+
+### Manual Test Steps
+
+1. Open Unity and allow the project to finish importing the new Wave 007B scripts.
+2. Run `ADITD/Setup/Wave 007B House With the Switches`.
+3. Open `Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity` if Unity does not leave it active automatically.
+4. Enter Play Mode.
+5. Walk into the room.
+6. Look at the ordinary switch and press `E`.
+7. Confirm the room gives clear wrong-form feedback through unstable light, visual disturbance, and recoverable state messaging.
+8. Hold `Q` to trigger the temporary local Shadow perception placeholder.
+9. Confirm one hidden seam/path/truth becomes visible only while Shadow perception is active.
+10. While holding `Q`, interact with the ordinary switch again using `E`.
+11. Confirm the room reaches a simple completed state with stable light and a visible completion marker.
+12. Confirm no console errors, missing scripts, or broken serialized references.
+
+### Manual Unity Validation Steps
+
+1. Select the root `Wave007B_HouseWithTheSwitches` object and confirm `HouseWithTheSwitchesController` is present with assigned light, seam, room renderers, and completion marker references.
+2. Select `SwitchHandle` under `OrdinarySwitch` and confirm `HouseSwitchInteractable` is present with the controller reference assigned.
+3. Confirm the Player prefab instance exists near the room entrance and uses the existing generic controller/interactor scripts unchanged.
+4. Save the scene after validation if the generated layout looks correct.
+
+### Known Limitations
+
+- Graybox only.
+- Shadow perception uses a temporary local `Q` placeholder instead of a shared Shadow system.
+- No full form switching.
+- No split-screen or third-person Shadow.
+- No real Pressure, Hearth, lore, anchor, save/load, or Focus Memory integration.
+- Visual/audio feedback is placeholder quality.
+- Headless Unity scene generation was not used after a local `Unity.Licensing.Client.exe` exception, so the scene should be generated from the normal editor menu instead.
+
+### Rollback Notes
+
+- Delete `Assets/_Project/Code/Rooms/HouseWithTheSwitchesController.cs`.
+- Delete `Assets/_Project/Code/Interaction/HouseSwitchInteractable.cs`.
+- Delete `Assets/_Project/Code/Editor/Wave007BHouseWithTheSwitchesSetup.cs`.
+- Delete or revert `Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity` after it is generated.
+- Remove this Wave 007B entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 007A Fix Pass: House With the Switches Mechanical Realignment
+
+### Summary
+
+Gemini Notebook reviewed Wave 007A and approved the docs with required mechanical realignment. The room and puzzle specs were updated to remove generic rhythm/sequence framing and explicitly realign the puzzle around Ego / normal interaction, Shadow perception reveal, wrong-form feedback, and one integrated action before Wave 007B graybox work.
+
+### Files Changed
+
+- `Docs/ROOM_SPECS/House_With_The_Switches.md`
+- `Docs/PUZZLE_SPECS/House_With_The_Switches.md`
+- `Docs/AGENT_REPORTS/Wave007A_Handoff.md`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Rewrote the room spec so the distortion rule is driven by wrong-self-state interaction rather than timing, sequence, or combination logic.
+- Reframed the Shadow reveal around first-person Shadow perception exposing a hidden seam, path, or truth concealed by ordinary glare.
+- Updated puzzle beats so wrong-form feedback comes from forced Ego control under surveillance and integrated action requires both Ego stabilization and Shadow reveal.
+- Updated the puzzle spec to explicitly name Ego / normal interaction state, Shadow perception state, and a split-self presentation placeholder for later only.
+- Replaced rhythm/sequence/combo acceptance language with a bounded one-room, one-switch, one-reveal, one-resolution MVP target for Wave 007B.
+- Added a handoff report summarizing Gemini's required realignment and the scope clamp for the next wave.
+
+### Manual Test Steps
+
+1. Open `Docs/ROOM_SPECS/House_With_The_Switches.md` and confirm the `Distortion Rule`, `Shadow Reveal`, `Puzzle Beats`, `Safe Pocket`, and `Manual Test Intention` sections now frame the room around Ego control versus Shadow perception instead of timing or sequence play.
+2. Open `Docs/PUZZLE_SPECS/House_With_The_Switches.md` and confirm `Required Systems`, `Wrong-Form Feedback`, `Acceptance Criteria`, `Manual Test Intention`, and `Implementation Notes for the Later Graybox Wave` explicitly bound 007B to one room, one ordinary switch, one localized Shadow reveal, and one integrated action.
+3. Confirm neither spec describes the puzzle as rhythm-based, sequence-based, timing-based, combination-based, or circuit-based.
+4. Open `Docs/AGENT_REPORTS/Wave007A_Handoff.md` and confirm the `Gemini Required Realignment` section summarizes the approved correction and scope clamp for 007B.
+5. Confirm this fix-pass entry appears at the top of `Docs/BUILD_LOG.md`.
+
+### Known Limitations
+
+- This remains a docs-only pass; no gameplay code, Unity scenes, prefabs, materials, assets, or input configuration were changed.
+- `Shadow Form` and `Shadow perception` are used here as MVP-facing design language, not as approval for a full controller architecture or split-self presentation system.
+- Stable IDs were not changed in this pass.
+
+### Rollback Notes
+
+- Revert `Docs/ROOM_SPECS/House_With_The_Switches.md`.
+- Revert `Docs/PUZZLE_SPECS/House_With_The_Switches.md`.
+- Delete `Docs/AGENT_REPORTS/Wave007A_Handoff.md`.
+- Remove this fix-pass entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 007: House With the Switches Spec Skeletons
+
+### Summary
+
+Created initial room and puzzle spec documents for `House With the Switches` using stable IDs, review-first status, and source-safe framing so Gemini Notebook can assess emotional truth before any graybox or implementation work begins.
+
+### Files Changed
+
+- `Docs/ROOM_SPECS/House_With_The_Switches.md`
+- `Docs/PUZZLE_SPECS/House_With_The_Switches.md`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Added room spec skeleton for **House With the Switches** with the requested sections:
+  - room title and stable ID
+  - status
+  - emotional thesis
+  - player-facing goal
+  - ordinary baseline
+  - distortion rule
+  - pressure source
+  - safe pocket
+  - shadow reveal
+  - puzzle beats
+  - anchor/lore reward placeholder
+  - manual test intention
+  - parked ideas
+- Added puzzle spec skeleton for **House With the Switches** with the requested sections:
+  - puzzle title and stable ID
+  - room link
+  - status
+  - emotional movement practiced
+  - required systems
+  - inputs
+  - named puzzle states
+  - wrong-form feedback
+  - repair path
+  - acceptance criteria
+  - player clarity notes
+  - manual test intention
+  - implementation notes for a later graybox wave
+- Marked both specs as pending **Gemini Notebook** review before any implementation wave begins.
+
+### Manual Test Steps
+
+1. Open `Docs/ROOM_SPECS/House_With_The_Switches.md` and confirm all requested room-spec headings are present.
+2. Open `Docs/PUZZLE_SPECS/House_With_The_Switches.md` and confirm all requested puzzle-spec headings are present.
+3. Verify stable IDs follow project conventions:
+   - `room.main_floor.house_with_the_switches`
+   - `puzzle.house_with_the_switches`
+4. Confirm both files explicitly require Gemini Notebook review for emotional truth and source-safety before implementation.
+5. Confirm this Wave 007 entry appears at the top of `Docs/BUILD_LOG.md`.
+
+### Known Limitations
+
+- These are draft spec skeletons only; no implementation wave, gameplay wiring, or Unity assets were created.
+- Emotional wording is intentionally conservative and may still need refinement once Gemini Notebook reviews continuity and truthfulness.
+- Room area placement uses `main_floor` as a provisional stable-ID segment pending any later project-level location decision.
+
+### Rollback Notes
+
+- Delete `Docs/ROOM_SPECS/House_With_The_Switches.md`.
+- Delete `Docs/PUZZLE_SPECS/House_With_The_Switches.md`.
+- Remove this **Wave 007** entry from the top of `Docs/BUILD_LOG.md`.
+
 ## Build Log Rules
 1. Newest entries at the top.
 2. Editor tooling waves must include:
