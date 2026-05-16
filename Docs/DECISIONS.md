@@ -2,6 +2,26 @@
 
 Living log of agreed defaults for **A Door Inside the Dark**. Unity-first, clean-room assumptions unless noted.
 
+## 2026-05-16 - Wave 008A Shadow Perception MVP Authorized
+
+Decision:
+Authorize Wave 008A Shadow Perception MVP as a small provisional reusable layer.
+
+Scope:
+- Visual-only reveal while `Q` is held.
+- `Q` binding remains temporary.
+- No Shadow Charge.
+- No audio treatment.
+- No full form switching.
+- No split-screen.
+- No save/load.
+- No Hearth.
+- No Pressure integration.
+- No global manager or singleton.
+
+Justification:
+Wave 007B proved the local `Q` placeholder, and Grok approved Wave 008A as the smallest truthful next mechanical step.
+
 ## Initial decisions (Wave 000)
 
 1. **Unity 6000.x with URP** is the rendering and project target.

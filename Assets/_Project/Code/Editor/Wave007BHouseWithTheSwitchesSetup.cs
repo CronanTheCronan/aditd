@@ -1,5 +1,6 @@
 using ADoorInsideTheDark.Interaction;
 using ADoorInsideTheDark.Rooms;
+using ADoorInsideTheDark.Shadow;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -29,8 +30,9 @@ namespace ADoorInsideTheDark.Editor
             EditorSceneManager.MoveGameObjectToScene(roomRoot, scene);
 
             ConfigureSceneLighting(scene);
-            BuildRoom(roomRoot.transform, out HouseWithTheSwitchesController controller);
-            BuildPlayer(scene);
+            GameObject player = BuildPlayer(scene);
+            ShadowPerceptionController shadowPerception = AddOrGetShadowPerceptionController(player);
+            BuildRoom(roomRoot.transform, shadowPerception, out HouseWithTheSwitchesController controller);
             ConfigureController(controller);
 
             EditorSceneManager.MarkSceneDirty(scene);
@@ -56,7 +58,10 @@ namespace ADoorInsideTheDark.Editor
             directionalLight.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
         }
 
-        private static void BuildRoom(Transform parent, out HouseWithTheSwitchesController controller)
+        private static void BuildRoom(
+            Transform parent,
+            ShadowPerceptionController shadowPerception,
+            out HouseWithTheSwitchesController controller)
         {
             GameObject floor = CreatePrimitive(parent, "Floor", PrimitiveType.Cube, new Vector3(0f, 0f, 0f), new Vector3(7.5f, 0.25f, 7.5f));
             GameObject ceiling = CreatePrimitive(parent, "Ceiling", PrimitiveType.Cube, new Vector3(0f, 3f, 0f), new Vector3(7.5f, 0.25f, 7.5f));
@@ -91,6 +96,7 @@ namespace ADoorInsideTheDark.Editor
             CreatePrimitive(seamRoot.transform, "SeamBottom", PrimitiveType.Cube, new Vector3(0f, 1.03f, 3.60f), new Vector3(0.58f, 0.04f, 0.04f));
             CreatePrimitive(seamRoot.transform, "SeamPath", PrimitiveType.Cube, new Vector3(0f, 0.11f, 1.45f), new Vector3(0.08f, 0.03f, 4.40f));
             SetCollidersEnabled(seamRoot, false);
+            ShadowRevealable seamRevealable = seamRoot.AddComponent<ShadowRevealable>();
 
             GameObject completionMarker = CreatePrimitive(parent, "CompletionMarker", PrimitiveType.Cube, new Vector3(0f, 1.5f, -3.45f), new Vector3(1.4f, 2.2f, 0.12f));
             completionMarker.GetComponent<Collider>().enabled = false;
@@ -114,7 +120,9 @@ namespace ADoorInsideTheDark.Editor
             controllerSo.FindProperty("_switchRenderer").objectReferenceValue = switchHandle.GetComponent<Renderer>();
             controllerSo.FindProperty("_switchHandle").objectReferenceValue = switchHandle.transform;
             controllerSo.FindProperty("_hiddenSeamRoot").objectReferenceValue = seamRoot;
+            controllerSo.FindProperty("_hiddenSeamRevealable").objectReferenceValue = seamRevealable;
             controllerSo.FindProperty("_completionMarker").objectReferenceValue = completionMarker;
+            controllerSo.FindProperty("_shadowPerception").objectReferenceValue = shadowPerception;
             SetObjectArray(
                 controllerSo.FindProperty("_roomRenderers"),
                 floor.GetComponent<Renderer>(),
@@ -132,6 +140,19 @@ namespace ADoorInsideTheDark.Editor
                 controllerSo.FindProperty("_completionRenderers"),
                 completionMarker.GetComponent<Renderer>());
             controllerSo.ApplyModifiedPropertiesWithoutUndo();
+
+            SerializedObject seamRevealableSo = new(seamRevealable);
+            seamRevealableSo.FindProperty("_controller").objectReferenceValue = shadowPerception;
+            SetObjectArray(
+                seamRevealableSo.FindProperty("_objectsToToggle"),
+                System.Array.Empty<Object>());
+            SetObjectArray(
+                seamRevealableSo.FindProperty("_renderersToToggleVisibility"),
+                seamRoot.GetComponentsInChildren<Renderer>());
+            SetObjectArray(
+                seamRevealableSo.FindProperty("_renderersToTint"),
+                System.Array.Empty<Object>());
+            seamRevealableSo.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static HouseWithTheSwitchesController AddOrGetController(GameObject roomRoot)
@@ -145,25 +166,42 @@ namespace ADoorInsideTheDark.Editor
             return controller;
         }
 
-        private static void BuildPlayer(Scene scene)
+        private static GameObject BuildPlayer(Scene scene)
         {
             GameObject playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
             if (playerPrefab == null)
             {
                 Debug.LogError($"[Wave007B Setup] Missing player prefab at '{PlayerPrefabPath}'.");
-                return;
+                return null;
             }
 
             GameObject playerInstance = PrefabUtility.InstantiatePrefab(playerPrefab, scene) as GameObject;
             if (playerInstance == null)
             {
                 Debug.LogError("[Wave007B Setup] Failed to instantiate player prefab.");
-                return;
+                return null;
             }
 
             playerInstance.name = "Player";
             playerInstance.transform.position = new Vector3(0f, 0.2f, -2.6f);
             playerInstance.transform.rotation = Quaternion.identity;
+            return playerInstance;
+        }
+
+        private static ShadowPerceptionController AddOrGetShadowPerceptionController(GameObject player)
+        {
+            if (player == null)
+            {
+                return null;
+            }
+
+            ShadowPerceptionController controller = player.GetComponent<ShadowPerceptionController>();
+            if (controller == null)
+            {
+                controller = player.AddComponent<ShadowPerceptionController>();
+            }
+
+            return controller;
         }
 
         private static void ConfigureController(HouseWithTheSwitchesController controller)
@@ -175,7 +213,7 @@ namespace ADoorInsideTheDark.Editor
 
             SerializedObject controllerSo = new(controller);
             controllerSo.FindProperty("_showDebugOverlay").boolValue = true;
-            controllerSo.FindProperty("_shadowPlaceholderControlLabel").stringValue = "Hold Q to let the glare drop";
+            controllerSo.FindProperty("_shadowPerceptionControlLabel").stringValue = "Hold Q to let Shadow show the hidden seam";
             controllerSo.ApplyModifiedPropertiesWithoutUndo();
         }
 

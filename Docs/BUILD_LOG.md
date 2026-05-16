@@ -1,5 +1,174 @@
 # Build Log
 
+## 2026-05-16 - Wave 008A-FixPass: Shadow Perception MVP Audit Fixes
+
+### Summary
+
+Applied the accepted Claude audit fixes for Wave 008A without expanding system scope: documented authorization in `Docs/DECISIONS.md`, added one-time broken-setup warning coverage for `ShadowRevealable`, removed one unused public API from `ShadowPerceptionController`, corrected inactive tint color caching to use instance material color, and simplified the Wave 007B setup so the seam uses visibility wiring without redundant tint assignment.
+
+### Files Changed
+
+- `Assets/_Project/Code/Shadow/ShadowRevealable.cs`
+- `Assets/_Project/Code/Shadow/ShadowPerceptionController.cs`
+- `Assets/_Project/Code/Editor/Wave007BHouseWithTheSwitchesSetup.cs`
+- `Docs/BUILD_LOG.md`
+- `Docs/DECISIONS.md`
+
+### What Was Fixed
+
+- Added a dated authorization entry to `Docs/DECISIONS.md` for the provisional Wave 008A Shadow Perception MVP and its explicit non-goals.
+- Added a clear one-time `Debug.LogWarning` path in `ShadowRevealable` when both inspector assignment and `FindAnyObjectByType<ShadowPerceptionController>()` fallback fail, so broken setup does not fail silently.
+- Changed `ShadowRevealable.CacheInactiveColors()` to cache `renderer.material.color` instead of `renderer.sharedMaterial.color`, preserving instance-material palette state when present.
+- Removed the unused public `TemporaryBindingNote` property from `ShadowPerceptionController` while keeping the serialized temporary-binding note for Inspector documentation.
+- Updated the Wave 007B setup tool so the seam revealable keeps `_renderersToToggleVisibility` wired but leaves `_renderersToTint` empty, avoiding redundant seam tint wiring.
+- Expanded the Wave 008A build-log coverage with missing manual edge-case checks and explicit Unity validation checks.
+
+### Manual Test Steps
+
+1. Open Unity and allow scripts to import.
+2. Confirm no Unity Console compile errors after import.
+3. Run `ADITD/Setup/Recreate Wave 007B House With the Switches`.
+4. Enter Play Mode.
+5. Confirm normal first-person movement, look, and interaction still work.
+6. Aim at or approach the hidden seam/test crack.
+7. Confirm it is hidden while `Q` is not held.
+8. Hold `Q` before pressing `E` while the room is still `Unresolved`.
+9. Confirm the seam does not reveal while the room is still `Unresolved`.
+10. Release `Q`.
+11. Press `E` on the ordinary switch without Shadow perception and confirm wrong-form destabilization still works.
+12. Hold `Q` after destabilization and confirm the seam/truth becomes visible.
+13. Release `Q` before completing the room and confirm the seam hides again without errors.
+14. Hold `Q` again and confirm Shadow perception reactivates cleanly.
+15. While holding `Q`, press `E` on the same switch and confirm the room completes.
+16. If feasible from the Inspector during Play Mode, disable `ShadowPerceptionController`.
+17. Confirm revealables clean up/hide without errors when the controller is disabled.
+18. Stop Play Mode.
+19. Confirm no console errors, missing scripts, broken serialized references, or null-reference warnings.
+
+### Manual Unity Validation Steps
+
+1. Run `ADITD/Setup/Recreate Wave 007B House With the Switches`.
+2. Select the generated `Player` object and confirm `ShadowPerceptionController` is present.
+3. Select `HiddenSeamRoot` and confirm `ShadowRevealable` is present.
+4. In `HiddenSeamRoot`'s `ShadowRevealable`, confirm the renderer references under visibility toggling are assigned as intended.
+5. In `HiddenSeamRoot`'s `ShadowRevealable`, confirm tint renderer references are intentionally empty for the seam setup.
+6. Select the root `Wave007B_HouseWithTheSwitches` object and confirm `HouseWithTheSwitchesController` has its `_shadowPerception` reference assigned.
+7. Confirm no missing scripts or broken serialized references are present after the setup menu finishes.
+
+### Known Limitations
+
+- Shadow perception remains visual-only.
+- `Q` binding is still temporary and not yet routed through the Input Actions asset.
+- No Shadow Charge.
+- No audio treatment.
+- No pressure integration.
+- No full form switching.
+- No split-screen or third-person Shadow proxy.
+- No save/load or Hearth interaction.
+- Revealable visuals remain prototype quality.
+- This pass does not address one-frame flicker.
+- This pass does not change seam root active/inactive behavior.
+- Rerunning `ADITD/Setup/Recreate Wave 007B House With the Switches` rebuilds the Wave 007B graybox scene from scratch and does not preserve manual scene tweaks.
+- Headless Unity scene generation is still avoided because of the prior local `Unity.Licensing.Client.exe` exception.
+
+### Rollback Notes
+
+- Revert `Assets/_Project/Code/Shadow/ShadowRevealable.cs`.
+- Revert `Assets/_Project/Code/Shadow/ShadowPerceptionController.cs`.
+- Revert `Assets/_Project/Code/Editor/Wave007BHouseWithTheSwitchesSetup.cs`.
+- Revert `Docs/DECISIONS.md`.
+- Remove the Wave 008A-FixPass entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 008A: Shadow Perception MVP
+
+### Summary
+
+Replaced the Wave 007B room’s temporary local `Q` placeholder with a small reusable Shadow Perception MVP: a player-bound perception controller plus reusable revealable component, then rewired the Wave 007B graybox seam to use that layer without touching player movement, look, or interaction architecture.
+
+### Files Changed
+
+- `Assets/_Project/Code/Shadow/IShadowRevealable.cs`
+- `Assets/_Project/Code/Shadow/ShadowPerceptionController.cs`
+- `Assets/_Project/Code/Shadow/ShadowRevealable.cs`
+- `Assets/_Project/Code/Rooms/HouseWithTheSwitchesController.cs`
+- `Assets/_Project/Code/Editor/Wave007BHouseWithTheSwitchesSetup.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Added `ShadowPerceptionController` under `Assets/_Project/Code/Shadow` as a minimal reusable perception-state component that activates while `Q` is held and deactivates cleanly when released.
+- Kept the `Q` binding explicitly temporary for Wave 008A and documented in code that this path should later route through the Input Actions asset.
+- Added reusable `IShadowRevealable` and `ShadowRevealable` types so future scenes can mark Shadow-visible objects without duplicating Wave 007B-specific room logic.
+- Replaced the local `Keyboard.current.qKey` polling inside `HouseWithTheSwitchesController` with a dependency on `ShadowPerceptionController` state changes.
+- Preserved the existing Wave 007B puzzle behavior: Ego-only switch use destabilizes the room, holding Shadow perception after destabilization reveals the seam, interacting with the same switch while perception is active completes the room, and releasing `Q` before completion hides the seam again.
+- Updated `ADITD/Setup/Recreate Wave 007B House With the Switches` so the recreated graybox scene adds `ShadowPerceptionController` to the generated player instance and wires the seam as a reusable `ShadowRevealable`.
+- The MVP reveal path uses no added raycast or visibility-query loop, so there is no new per-frame raycast cost for this wave.
+
+### Menu Path
+
+- `ADITD/Setup/Recreate Wave 007B House With the Switches`
+
+### Tool Purpose
+
+- Recreates the dedicated Wave 007B graybox scene from scratch, with the reusable Shadow Perception MVP wired into the generated player and seam reveal object.
+
+### Created or Updated Assets
+
+- Recreates `Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity` when the menu command is run in the Unity Editor.
+
+### Manual Test Steps
+
+1. Open Unity and allow scripts to import.
+2. Confirm no Unity Console compile errors after import.
+3. Run `ADITD/Setup/Recreate Wave 007B House With the Switches`.
+4. Enter Play Mode.
+5. Confirm normal first-person movement, look, and interaction still work.
+6. Aim at or approach the hidden seam/test crack.
+7. Confirm it is hidden while `Q` is not held.
+8. Hold `Q` before pressing `E` while the room is still `Unresolved`.
+9. Confirm the seam does not reveal while the room is still `Unresolved`.
+10. Release `Q`.
+11. Press `E` on the ordinary switch without Shadow perception and confirm wrong-form destabilization still works.
+12. Hold `Q` after destabilization and confirm the seam/truth becomes visible.
+13. Release `Q` before completion and confirm the seam hides again.
+14. Hold `Q` again.
+15. Confirm Shadow perception activates and the hidden seam/test crack becomes visible or highlighted.
+16. While holding `Q`, press `E` on the same switch and confirm the room completes.
+17. If feasible from the Inspector during Play Mode, disable `ShadowPerceptionController` and confirm revealables clean up/hide without errors.
+18. Stop Play Mode.
+19. Confirm no console errors, missing scripts, broken serialized references, or null-reference warnings.
+
+### Manual Unity Validation Steps
+
+1. Run `ADITD/Setup/Recreate Wave 007B House With the Switches`.
+2. Select the generated `Player` object and confirm `ShadowPerceptionController` is present.
+3. Select `HiddenSeamRoot` and confirm `ShadowRevealable` is present.
+4. In `HiddenSeamRoot`'s `ShadowRevealable`, confirm the renderer references under visibility toggling are assigned as intended.
+5. Select the root `Wave007B_HouseWithTheSwitches` object and confirm `HouseWithTheSwitchesController` has its `_shadowPerception` reference assigned.
+6. Confirm no missing scripts or broken serialized references are present after the setup menu finishes.
+
+### Known Limitations
+
+- Shadow perception is visual-only.
+- `Q` binding is still temporary and not yet routed through the Input Actions asset.
+- No Shadow Charge.
+- No audio treatment.
+- No pressure integration.
+- No full form switching.
+- No split-screen or third-person Shadow proxy.
+- No save/load or Hearth interaction.
+- Revealable visuals are prototype quality.
+- Rerunning `ADITD/Setup/Recreate Wave 007B House With the Switches` rebuilds the Wave 007B graybox scene from scratch and does not preserve manual scene tweaks.
+- Headless Unity scene generation is still avoided because of the prior local `Unity.Licensing.Client.exe` exception.
+
+### Rollback Notes
+
+- Delete or revert new files under `Assets/_Project/Code/Shadow`.
+- Revert `Assets/_Project/Code/Rooms/HouseWithTheSwitchesController.cs`.
+- Revert `Assets/_Project/Code/Editor/Wave007BHouseWithTheSwitchesSetup.cs`.
+- Delete or recreate the generated Wave 007B scene if needed.
+- Remove the Wave 008A entry from the top of `Docs/BUILD_LOG.md`.
+
 ## 2026-05-16 - Wave 007B-FixPass: House With the Switches Audit Fixes
 
 ### Summary

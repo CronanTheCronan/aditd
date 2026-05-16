@@ -1,6 +1,6 @@
 using ADoorInsideTheDark.Player;
+using ADoorInsideTheDark.Shadow;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace ADoorInsideTheDark.Rooms
 {
@@ -20,15 +20,17 @@ namespace ADoorInsideTheDark.Rooms
         [SerializeField] private Renderer _switchRenderer;
         [SerializeField] private Transform _switchHandle;
         [SerializeField] private GameObject _hiddenSeamRoot;
+        [SerializeField] private ShadowRevealable _hiddenSeamRevealable;
         [SerializeField] private Renderer[] _hiddenSeamRenderers;
         [SerializeField] private GameObject _completionMarker;
         [SerializeField] private Renderer[] _completionRenderers;
+        [SerializeField] private ShadowPerceptionController _shadowPerception;
 
         [Header("Feedback")]
         [SerializeField] private bool _showDebugOverlay = true;
         [SerializeField] private float _wrongFormFeedbackDuration = 1.35f;
         [SerializeField] private float _switchHandlePressedAngle = 26f;
-        [SerializeField] private string _shadowPlaceholderControlLabel = "Hold Q to enter Shadow perception";
+        [SerializeField] private string _shadowPerceptionControlLabel = "Hold Q to enter Shadow perception";
 
         private static readonly Color RoomUnresolvedColor = new(0.22f, 0.22f, 0.24f, 1f);
         private static readonly Color RoomDestabilizedColor = new(0.35f, 0.21f, 0.21f, 1f);
@@ -42,7 +44,6 @@ namespace ADoorInsideTheDark.Rooms
 
         private RoomState _state = RoomState.Unresolved;
         private float _feedbackTimer;
-        private bool _shadowPerceptionActive;
         private bool _shadowRevealLearned;
         private Quaternion _switchHandleBaseRotation = Quaternion.identity;
         private GUIStyle _overlayStyle;
@@ -56,7 +57,7 @@ namespace ADoorInsideTheDark.Rooms
                 return;
             }
 
-            if (_shadowPerceptionActive && _shadowRevealLearned)
+            if (IsShadowPerceptionActive() && _shadowRevealLearned)
             {
                 CompleteRoom();
                 return;
@@ -67,6 +68,8 @@ namespace ADoorInsideTheDark.Rooms
 
         private void Awake()
         {
+            AutoAssignDependencies();
+
             if (_switchHandle != null)
             {
                 _switchHandleBaseRotation = _switchHandle.localRotation;
@@ -76,11 +79,6 @@ namespace ADoorInsideTheDark.Rooms
             ApplyPalette(_hiddenSeamRenderers, SeamRevealColor);
             ApplyPalette(_completionRenderers, CompletionColor);
 
-            if (_hiddenSeamRoot != null)
-            {
-                _hiddenSeamRoot.SetActive(false);
-            }
-
             if (_completionMarker != null)
             {
                 _completionMarker.SetActive(false);
@@ -89,10 +87,25 @@ namespace ADoorInsideTheDark.Rooms
             ApplyCurrentVisualState();
         }
 
+        private void OnEnable()
+        {
+            if (_shadowPerception != null)
+            {
+                _shadowPerception.PerceptionStateChanged += HandleShadowPerceptionChanged;
+                HandleShadowPerceptionChanged(_shadowPerception.IsPerceptionActive);
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_shadowPerception != null)
+            {
+                _shadowPerception.PerceptionStateChanged -= HandleShadowPerceptionChanged;
+            }
+        }
+
         private void Update()
         {
-            UpdateShadowPlaceholderInput();
-
             if (_feedbackTimer > 0f)
             {
                 _feedbackTimer = Mathf.Max(0f, _feedbackTimer - Time.deltaTime);
@@ -126,7 +139,7 @@ namespace ADoorInsideTheDark.Rooms
                 RoomState.Unresolved =>
                     "Use the ordinary switch with E. It will not settle the room by force alone.",
                 RoomState.Destabilized =>
-                    "The glare fights you back. " + _shadowPlaceholderControlLabel + " and look for the hidden seam.",
+                    "The glare fights you back. " + _shadowPerceptionControlLabel + " and look for the hidden seam.",
                 RoomState.ShadowRevealed =>
                     "The seam is visible. Keep Shadow perception active and press E on the switch to settle the room.",
                 RoomState.Completed =>
@@ -154,6 +167,13 @@ namespace ADoorInsideTheDark.Rooms
                     this);
             }
 
+            if (_hiddenSeamRevealable == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(HouseWithTheSwitchesController)} on '{gameObject.name}' should assign {nameof(_hiddenSeamRevealable)}.",
+                    this);
+            }
+
             if (_switchRenderer == null)
             {
                 Debug.LogWarning(
@@ -174,30 +194,42 @@ namespace ADoorInsideTheDark.Rooms
                     $"{nameof(HouseWithTheSwitchesController)} on '{gameObject.name}' should assign {nameof(_completionMarker)}.",
                     this);
             }
+
+            if (_shadowPerception == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(HouseWithTheSwitchesController)} on '{gameObject.name}' should assign {nameof(_shadowPerception)}.",
+                    this);
+            }
         }
 
-        private void UpdateShadowPlaceholderInput()
+        private void AutoAssignDependencies()
         {
-            bool shouldEnableShadow = Keyboard.current != null && Keyboard.current.qKey.isPressed;
-            if (_shadowPerceptionActive == shouldEnableShadow)
+            if (_hiddenSeamRevealable == null && _hiddenSeamRoot != null)
             {
-                return;
+                _hiddenSeamRevealable = _hiddenSeamRoot.GetComponent<ShadowRevealable>();
             }
 
-            _shadowPerceptionActive = shouldEnableShadow;
+            if (_shadowPerception == null)
+            {
+                _shadowPerception = FindAnyObjectByType<ShadowPerceptionController>();
+            }
+        }
 
+        private void HandleShadowPerceptionChanged(bool isActive)
+        {
             if (_state == RoomState.Completed)
             {
                 return;
             }
 
-            if (_shadowPerceptionActive && _state == RoomState.Destabilized)
+            if (isActive && _state == RoomState.Destabilized)
             {
                 _state = RoomState.ShadowRevealed;
                 _shadowRevealLearned = true;
                 Debug.Log("[HouseWithTheSwitches] Shadow perception revealed the hidden seam.", this);
             }
-            else if (!_shadowPerceptionActive && _state == RoomState.ShadowRevealed)
+            else if (!isActive && _state == RoomState.ShadowRevealed)
             {
                 _state = RoomState.Destabilized;
             }
@@ -207,6 +239,12 @@ namespace ADoorInsideTheDark.Rooms
         {
             _state = RoomState.Destabilized;
             _feedbackTimer = _wrongFormFeedbackDuration;
+
+            if (IsShadowPerceptionActive())
+            {
+                HandleShadowPerceptionChanged(true);
+            }
+
             Debug.Log("[HouseWithTheSwitches] Ego-only switch use destabilized the room.", this);
         }
 
@@ -214,16 +252,20 @@ namespace ADoorInsideTheDark.Rooms
         {
             _state = RoomState.Completed;
             _feedbackTimer = 0f;
-            _shadowPerceptionActive = false;
             Debug.Log("[HouseWithTheSwitches] Integrated Ego + Shadow action completed the room.", this);
         }
 
         private void ApplyCurrentVisualState()
         {
             bool revealActive = _state == RoomState.Completed ||
-                (_shadowPerceptionActive && (_state == RoomState.Destabilized || _state == RoomState.ShadowRevealed));
+                (IsShadowPerceptionActive() && (_state == RoomState.Destabilized || _state == RoomState.ShadowRevealed));
 
-            if (_hiddenSeamRoot != null && _hiddenSeamRoot.activeSelf != revealActive)
+            if (_hiddenSeamRevealable != null)
+            {
+                _hiddenSeamRevealable.SetRevealAllowed(_state == RoomState.Destabilized || _state == RoomState.ShadowRevealed);
+                _hiddenSeamRevealable.SetForceReveal(_state == RoomState.Completed);
+            }
+            else if (_hiddenSeamRoot != null && _hiddenSeamRoot.activeSelf != revealActive)
             {
                 _hiddenSeamRoot.SetActive(revealActive);
             }
@@ -292,6 +334,11 @@ namespace ADoorInsideTheDark.Rooms
 
                 _switchHandle.localRotation = _switchHandleBaseRotation * Quaternion.Euler(angle, 0f, 0f);
             }
+        }
+
+        private bool IsShadowPerceptionActive()
+        {
+            return _shadowPerception != null && _shadowPerception.IsPerceptionActive;
         }
 
         private static void ApplyPalette(Renderer[] renderers, Color color)
