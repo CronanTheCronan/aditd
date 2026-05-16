@@ -13,6 +13,70 @@
 
 ---
 
+## 2026-05-15 - Wave 006: Editor Setup Helper for Wave 004 Test UI
+
+### Summary
+
+Editor-only setup command that programmatically builds or rewires legacy `UnityEngine.UI` Canvas prompts and inspection panels in the active scene, assigns `PlayerInteractor` references via `SerializedObject`, and optionally spawns `InspectableDebugCube` when no `IInspectable` exists. Idempotent-by-name reuse; no gameplay, runtime `UnityEditor`, TextMeshPro, or additional tooling.
+
+### Files Changed
+
+- `Assets/_Project/Code/Editor/Wave004TestSceneSetup.cs`
+- `Docs/BUILD_LOG.md`
+
+### Tool Menu Path
+
+`ADITD/Setup/Wave 004 Test UI`
+
+### Tool Purpose
+
+Remove manual Canvas/UI wiring friction for Wave 004 manual tests in `Test_FirstPersonController` (still works if run in another scene with a warning).
+
+### What Was Implemented
+
+- Menu command `Wave004TestSceneSetup` under `ADITD/Setup/Wave 004 Test UI`.
+- Active-scene workflow: warns when scene name is not `Test_FirstPersonController`; continues anyway.
+- **Canvas:** Finds or creates root `ADITD_TestCanvas` with `Canvas` (`Screen Space Overlay`), `CanvasScaler` (defaults applied when scaler is newly added), and `GraphicRaycaster`.
+- **Prompt:** Under Canvas, finds or creates `InteractionPrompt` with `InteractionPromptView`; child `PromptText` with legacy `UnityEngine.UI.Text`; serialized `_root` / `_promptText` wired via `SerializedObject`; prompt starts hidden (`PromptText` inactive).
+- **Panel:** Finds or creates `InspectionPanel` with `InspectionPanelView`; child `PanelContents` (`Image` backdrop) toggled by `_panelRoot`; `TitleText` and `BodyText` legacy `Text` components; `_titleText` / `_bodyText` wired; panel starts hidden (`PanelContents` inactive).
+- **`PlayerInteractor`:** Locates instances in the **active scene only**; sets `_promptView` and `_inspectionPanel` through serialized properties (fields stay private).
+- **Inspectable test prop:** If no `IInspectable` exists, reuses root `InspectableDebugCube` or creates a primitive cube `InspectableDebugCube` with `InspectableDebugObject`; refuses to stack `InspectableDebugObject` on a GameObject that already has another `IInteractable`.
+- **Undo grouping** named `ADITD Wave 004 Test UI Setup`; **`EditorSceneManager.MarkSceneDirty`** on the active scene; console logs for created, reused, skipped, and warned steps.
+
+### Created or Updated Assets (Editor Session)
+
+Creates **scene-local** GameObjects in the scene you open (not new `.prefab`/`.asset` disk files unless you save). Expected hierarchy includes `PanelContents` (internal visibility root, not Wave name list) plus the suggested Wave names.
+
+### Manual Test Steps
+
+1. Open `Assets/_Project/Scenes/Test_FirstPersonController.unity`.
+2. Run **`ADITD/Setup/Wave 004 Test UI`**.
+3. In Hierarchy under `ADITD_TestCanvas`, confirm `InteractionPrompt` / `PromptText`, `InspectionPanel` / `PanelContents` / `TitleText` / `BodyText`.
+4. Select the player (or prefab instance) carrying `PlayerInteractor`; confirm **`Interaction Prompt View`** and **`Inspection Panel`** reference fields populate.
+5. Run the menu command **again**: confirm **no duplicate** sibling UI objects (`ADITD_TestCanvas`, `InteractionPrompt`, `InspectionPanel` stay single-instance where named).
+6. Enter **Play Mode** and verify Wave 004 behavior:
+   - **WASD** movement, mouse look unchanged.
+   - Aim at **`InspectableDebugCube`** (or any inspectable): **E Inspect** prompt shows; look away → hidden.
+   - **E** opens inspection panel; **E** or **Escape** closes it.
+7. Inspect **Console** for `[ADITD Wave004 UI Setup]` logs (created / reused / skipped / warnings).
+
+### Known Limitations
+
+- **Existing CanvasScaler:** If `ADITD_TestCanvas` already had a scaler, its **reference resolution / match** values are left as-is (only **newly added** scaler gets Wave defaults).
+- **Font:** Uses built-in LegacyRuntime/Arial lookup; Unity may omit in some setups—Console warns; assign a Font in Inspector if text is invisible.
+- **Duplicates:** Naming discipline (`ADITD_TestCanvas`, etc.) avoids junk; oddly named clones outside this naming are ignored.
+- **Assignment scope:** Finds the **first** `InteractionPromptView` / `InspectionPanelView` under the scene roots; ambiguous multi-UI setups are out of Wave scope.
+- **`PanelContents`** is an extra hierarchy node required so `InspectionPanelView` can toggle visibility **without disabling** the host `InspectionPanel` GameObject script.
+
+### Rollback Notes
+
+- Delete or disable **`ADITD_TestCanvas`** and **`InspectableDebugCube`** in the scene, clear `PlayerInteractor` UI refs if undesired; save scene—or **Git discard** edits to affected scene file.
+- Delete `Assets/_Project/Code/Editor/Wave004TestSceneSetup.cs` (and `.meta` if your workflow tracks Unity-generated `.meta`).
+- Remove this **Wave 006** section from **`Docs/BUILD_LOG.md`**.
+
+
+---
+
 ## 2026-05-15 - Wave 005A: Claude audit fixes (rules, docs, raycast cache)
 
 ### Summary

@@ -15,12 +15,27 @@ namespace ADoorInsideTheDark.Interaction
         private string _inspectionBody =
             "Placeholder inspection copy for Wave 004. Not final lore.";
 
+        [SerializeField] private Color _startupTint = new(0.86f, 0.42f, 0.62f, 1f);
+
         [SerializeField] private Color _interactedColor = new(0.2f, 0.85f, 0.35f, 1f);
 
         private Renderer _renderer;
 
         public string InspectionTitle => _inspectionTitle;
         public string InspectionBody => _inspectionBody;
+
+        /// <summary>
+        /// Re-applies <see cref="_startupTint"/> to the renderer material (callable from Editor setup helpers).
+        /// </summary>
+        public void RefreshStartupTint()
+        {
+            ApplyStartupTintToRenderer();
+        }
+
+        private void Awake()
+        {
+            ApplyStartupTintToRenderer();
+        }
 
         public void Interact(PlayerContext context)
         {
@@ -33,6 +48,17 @@ namespace ADoorInsideTheDark.Interaction
             }
         }
 
+        private void ApplyStartupTintToRenderer()
+        {
+            _renderer ??= GetComponent<Renderer>();
+            if (_renderer == null)
+            {
+                return;
+            }
+
+            _renderer.material.color = _startupTint;
+        }
+
         private void OnValidate()
         {
             if (GetComponent<Collider>() == null)
@@ -40,6 +66,11 @@ namespace ADoorInsideTheDark.Interaction
                 Debug.LogWarning(
                     $"{nameof(InspectableDebugObject)} on '{gameObject.name}' requires a Collider for raycasts.",
                     this);
+            }
+
+            if (!Application.isPlaying)
+            {
+                ApplyStartupTintToRenderer();
             }
         }
     }
