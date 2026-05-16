@@ -10,13 +10,19 @@ namespace ADoorInsideTheDark.Editor
 {
     public static class Wave007BHouseWithTheSwitchesSetup
     {
-        private const string MenuPath = "ADITD/Setup/Wave 007B House With the Switches";
+        private const string MenuPath = "ADITD/Setup/Recreate Wave 007B House With the Switches";
         private const string ScenePath = "Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity";
         private const string PlayerPrefabPath = "Assets/_Project/Prefabs/Player/Player.prefab";
 
         [MenuItem(MenuPath)]
-        public static void CreateOrRefreshScene()
+        public static void CreateOrRecreateScene()
         {
+            if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            {
+                Debug.Log("[Wave007B Setup] Scene recreation canceled by user before replacing the active scene.");
+                return;
+            }
+
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             GameObject roomRoot = new("Wave007B_HouseWithTheSwitches");
@@ -31,7 +37,7 @@ namespace ADoorInsideTheDark.Editor
             EditorSceneManager.SaveScene(scene, ScenePath);
 
             Debug.Log(
-                $"[Wave007B Setup] Created or refreshed '{ScenePath}'. This setup only overwrites the dedicated Wave 007B graybox scene.",
+                $"[Wave007B Setup] Created or recreated '{ScenePath}'. This setup rebuilds the dedicated Wave 007B graybox scene from scratch.",
                 roomRoot);
         }
 
@@ -97,7 +103,7 @@ namespace ADoorInsideTheDark.Editor
             overheadLight.range = 12f;
             overheadLight.shadows = LightShadows.Soft;
 
-            controller = roomRootAddController(parent.gameObject);
+            controller = AddOrGetController(parent.gameObject);
 
             SerializedObject interactableSo = new(interactable);
             interactableSo.FindProperty("_controller").objectReferenceValue = controller;
@@ -128,7 +134,7 @@ namespace ADoorInsideTheDark.Editor
             controllerSo.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        private static HouseWithTheSwitchesController roomRootAddController(GameObject roomRoot)
+        private static HouseWithTheSwitchesController AddOrGetController(GameObject roomRoot)
         {
             HouseWithTheSwitchesController controller = roomRoot.GetComponent<HouseWithTheSwitchesController>();
             if (controller == null)
@@ -156,7 +162,7 @@ namespace ADoorInsideTheDark.Editor
             }
 
             playerInstance.name = "Player";
-            playerInstance.transform.position = new Vector3(0f, 0.05f, -2.6f);
+            playerInstance.transform.position = new Vector3(0f, 0.2f, -2.6f);
             playerInstance.transform.rotation = Quaternion.identity;
         }
 

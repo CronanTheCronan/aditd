@@ -153,6 +153,27 @@ namespace ADoorInsideTheDark.Rooms
                     $"{nameof(HouseWithTheSwitchesController)} on '{gameObject.name}' should assign {nameof(_hiddenSeamRoot)}.",
                     this);
             }
+
+            if (_switchRenderer == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(HouseWithTheSwitchesController)} on '{gameObject.name}' should assign {nameof(_switchRenderer)}.",
+                    this);
+            }
+
+            if (_switchHandle == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(HouseWithTheSwitchesController)} on '{gameObject.name}' should assign {nameof(_switchHandle)}.",
+                    this);
+            }
+
+            if (_completionMarker == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(HouseWithTheSwitchesController)} on '{gameObject.name}' should assign {nameof(_completionMarker)}.",
+                    this);
+            }
         }
 
         private void UpdateShadowPlaceholderInput()

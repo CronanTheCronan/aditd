@@ -1,5 +1,77 @@
 # Build Log
 
+## 2026-05-16 - Wave 007B-FixPass: House With the Switches Audit Fixes
+
+### Summary
+
+Applied a small Wave 007B stabilization pass from Claude's non-blocking audit: added earlier scene-wiring warnings, tightened the editor setup tool's safety and naming, corrected the player spawn height, and clarified in the docs that the Wave 007B scene command recreates the graybox scene from scratch.
+
+### Files Changed
+
+- `Assets/_Project/Code/Rooms/HouseWithTheSwitchesController.cs`
+- `Assets/_Project/Code/Interaction/HouseSwitchInteractable.cs`
+- `Assets/_Project/Code/Editor/Wave007BHouseWithTheSwitchesSetup.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Fixed
+
+- Added an early startup warning in `HouseSwitchInteractable.Awake` so missing controller wiring is surfaced during initialization instead of only when the player presses `E`.
+- Added simple `OnValidate` warnings in `HouseWithTheSwitchesController` for `_switchRenderer`, `_switchHandle`, and `_completionMarker`.
+- Renamed the editor helper method `roomRootAddController` to `AddOrGetController` for consistent PascalCase naming.
+- Updated the editor menu command to prompt the user to save modified scenes before replacing the active scene.
+- Clarified the editor tool language so it explicitly recreates the Wave 007B graybox scene from scratch and does not imply manual scene edits are preserved.
+- Corrected the generated player spawn height from `0.05f` to `0.2f` so the player starts safely above the floor surface.
+- Expanded manual test coverage in the build log for unresolved `Q` behavior, repeated destabilized switch use, releasing `Q` from the reveal state, and post-import compile checks.
+
+### Menu Path
+
+- `ADITD/Setup/Recreate Wave 007B House With the Switches`
+
+### Tool Purpose
+
+- Recreates the dedicated Wave 007B graybox scene from scratch, with a save prompt before replacing the current active scene.
+
+### Created or Updated Assets
+
+- Recreates `Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity` when the menu command is run in the Unity Editor.
+
+### Manual Test Steps
+
+1. Open Unity and allow the project to finish importing the Wave 007B scripts.
+2. Confirm the Unity Console shows no compile errors after import completes.
+3. Make a harmless unsaved scene change, run `ADITD/Setup/Recreate Wave 007B House With the Switches`, and confirm Unity prompts you to save modified scenes before replacing the active scene.
+4. Run `ADITD/Setup/Recreate Wave 007B House With the Switches`.
+5. Open `Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity` if Unity does not leave it active automatically.
+6. Enter Play Mode.
+7. Confirm the player starts above the floor and is not partially embedded in it.
+8. Hold `Q` before pressing `E` and confirm the hidden seam does not reveal while the room is still `Unresolved`.
+9. Look at the ordinary switch and press `E`.
+10. Confirm the room gives clear wrong-form feedback through unstable light, visual disturbance, and recoverable state messaging.
+11. Press `E` multiple times while the room is `Destabilized` and confirm the wrong-form feedback restarts cleanly instead of leaving the room in a broken state.
+12. Hold `Q` and confirm one hidden seam/path/truth becomes visible while Shadow perception is active.
+13. Release `Q` while the room is `ShadowRevealed` and confirm the room returns to `Destabilized` and the hidden seam hides again.
+14. Hold `Q` again, then interact with the ordinary switch using `E`.
+15. Confirm the room reaches a simple completed state with stable light and a visible completion marker.
+16. Confirm no console errors, missing scripts, or broken serialized references.
+
+### Known Limitations
+
+- Graybox only.
+- Shadow perception uses a temporary local `Q` placeholder instead of a shared Shadow system.
+- No full form switching.
+- No split-screen or third-person Shadow.
+- No real Pressure, Hearth, lore, anchor, save/load, or Focus Memory integration.
+- Visual/audio feedback is placeholder quality.
+- Rerunning `ADITD/Setup/Recreate Wave 007B House With the Switches` rebuilds the Wave 007B graybox scene from scratch and does not preserve manual scene tweaks.
+- Headless Unity scene generation is still avoided because of the prior local `Unity.Licensing.Client.exe` exception.
+
+### Rollback Notes
+
+- Revert `Assets/_Project/Code/Rooms/HouseWithTheSwitchesController.cs`.
+- Revert `Assets/_Project/Code/Interaction/HouseSwitchInteractable.cs`.
+- Revert `Assets/_Project/Code/Editor/Wave007BHouseWithTheSwitchesSetup.cs`.
+- Revert the Wave 007B-FixPass entry at the top of `Docs/BUILD_LOG.md`.
+
 ## 2026-05-16 - Wave 007B: House With the Switches Graybox Prototype
 
 ### Summary
@@ -20,7 +92,7 @@ Implemented a contained Wave 007B graybox prototype path for **House With the Sw
 - Implemented a temporary local MVP Shadow perception placeholder on `Q` so no shared Shadow system, player controller rewrite, or input-asset change was required for this wave.
 - Implemented one integrated completion action: destabilize the room with the ordinary switch, reveal the hidden seam while holding Shadow perception, then interact with the same switch again to settle the room.
 - Added `HouseSwitchInteractable` so the ordinary switch stays explicit and reusable only at the scene level, without moving puzzle behavior into player scripts.
-- Added editor tooling at `ADITD/Setup/Wave 007B House With the Switches` to create or refresh a dedicated graybox scene with:
+- Added editor tooling at `ADITD/Setup/Recreate Wave 007B House With the Switches` to create or recreate a dedicated graybox scene with:
   - one boxed room
   - one ordinary wall switch
   - one hidden seam/path reveal
@@ -30,20 +102,20 @@ Implemented a contained Wave 007B graybox prototype path for **House With the Sw
 
 ### Menu Path
 
-- `ADITD/Setup/Wave 007B House With the Switches`
+- `ADITD/Setup/Recreate Wave 007B House With the Switches`
 
 ### Tool Purpose
 
-- Creates or refreshes the dedicated Wave 007B graybox scene without hand-editing Unity YAML and limits scene writes to the Wave 007B scene only.
+- Creates or recreates the dedicated Wave 007B graybox scene without hand-editing Unity YAML and limits scene writes to the Wave 007B scene only.
 
 ### Created or Updated Assets
 
-- Creates or refreshes `Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity` when the menu command is run in the Unity Editor.
+- Creates or recreates `Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity` when the menu command is run in the Unity Editor.
 
 ### Manual Test Steps
 
 1. Open Unity and allow the project to finish importing the new Wave 007B scripts.
-2. Run `ADITD/Setup/Wave 007B House With the Switches`.
+2. Run `ADITD/Setup/Recreate Wave 007B House With the Switches`.
 3. Open `Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity` if Unity does not leave it active automatically.
 4. Enter Play Mode.
 5. Walk into the room.
@@ -70,6 +142,7 @@ Implemented a contained Wave 007B graybox prototype path for **House With the Sw
 - No split-screen or third-person Shadow.
 - No real Pressure, Hearth, lore, anchor, save/load, or Focus Memory integration.
 - Visual/audio feedback is placeholder quality.
+- Rerunning the menu command recreates the scene from scratch and does not preserve manual scene tweaks.
 - Headless Unity scene generation was not used after a local `Unity.Licensing.Client.exe` exception, so the scene should be generated from the normal editor menu instead.
 
 ### Rollback Notes

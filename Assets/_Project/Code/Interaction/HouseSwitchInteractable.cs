@@ -28,6 +28,13 @@ namespace ADoorInsideTheDark.Interaction
             {
                 _controller = GetComponentInParent<HouseWithTheSwitchesController>();
             }
+
+            if (_controller == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(HouseSwitchInteractable)} on '{gameObject.name}' could not find a {nameof(HouseWithTheSwitchesController)} during {nameof(Awake)}.",
+                    this);
+            }
         }
 
         private void OnValidate()
