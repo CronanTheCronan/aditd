@@ -67,6 +67,20 @@ namespace ADoorInsideTheDark.Hearth
                     $"{nameof(HearthAnchorPlacementSlot)} on '{gameObject.name}' requires a Collider for player interaction.",
                     this);
             }
+
+            if (_highlightRoot == null)
+            {
+                Debug.LogWarning(
+                    $"{nameof(HearthAnchorPlacementSlot)} on '{gameObject.name}' should assign {nameof(_highlightRoot)} for placement feedback.",
+                    this);
+            }
+
+            if (_highlightRenderers == null || _highlightRenderers.Length == 0)
+            {
+                Debug.LogWarning(
+                    $"{nameof(HearthAnchorPlacementSlot)} on '{gameObject.name}' should assign at least one renderer in {nameof(_highlightRenderers)} for placement feedback.",
+                    this);
+            }
         }
 
         private void CacheBaseColors()

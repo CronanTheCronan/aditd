@@ -1,5 +1,14 @@
 # Build Log
 
+## Build Log Rules
+1. Newest entries at the top.
+2. Editor tooling waves must include:
+- menu path
+- tool purpose
+- created/updated assets
+- manual Unity validation steps
+- rollback steps
+
 ## 2026-05-16 - Wave 013B-RetryPrep: Bus of Names Retry Constraint Brief
 
 ### Summary
@@ -310,6 +319,51 @@ Added a docs-only stub spec defining the single exit/door prompt that appears af
 
 - Delete `Docs/ROOM_SPECS/Hearth_ExitStub.md`.
 - Remove the Wave 012A entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 011C: Minimal Hearth Return Stabilization Pass
+
+### Summary
+
+Stabilized the existing Wave 011B Green Thermos -> Hearth placement -> Next Door flow by explicitly resetting runtime-only state on startup and tightening scene-validation warnings around the placement slot, without adding persistence, inventory, routing, or broader Hearth architecture.
+
+### Files Changed
+
+- `Assets/_Project/Code/Hearth/HearthMinimalReturnController.cs`
+- `Assets/_Project/Code/Hearth/HearthAnchorPlacementSlot.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Added an explicit runtime reset in `HearthMinimalReturnController.Awake` so local carry/placed/confirmation/next-door state always starts cleanly when entering Play Mode, reducing stale-state risk during repeated manual validation or play sessions.
+- Kept the existing claim prompt, placement prompt, calm confirmation line, local boolean flow, and Next Door stub behavior unchanged so the MVP loop remains the same player-facing experience.
+- Added minimal `OnValidate` warnings to `HearthAnchorPlacementSlot` for missing highlight references, making broken serialized feedback setup easier to catch in the Editor without introducing new systems or scene logic.
+
+### Manual Test Steps
+
+1. Open Unity and confirm there are no compile errors.
+2. Run `ADITD/Setup/Recreate Wave 011B Minimal Hearth Return`.
+3. Open `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity`.
+4. Enter Play Mode.
+5. Approach the Green Thermos and confirm the claim prompt appears.
+6. Press `E` and confirm the Thermos is claimed/carried.
+7. Approach the Hearth shelf slot and confirm the placement prompt appears.
+8. Press `E` and confirm the Thermos is placed once.
+9. Confirm the calm confirmation beat occurs.
+10. Confirm repeated interaction does not duplicate the Thermos or break state.
+11. Confirm the Next Door flow still works.
+12. Confirm no save/load, inventory, scene routing, or progression system was added.
+
+### Known Limitations
+
+- This pass was validated source-side only; Unity Editor play validation is still required for compile status, prompt readability, and recreated-scene wiring.
+- The placement-slot highlight still depends on correct scene/setup references; this wave improves warning visibility but does not redesign the feedback path.
+- No persistence was added, so all Hearth/Thermos state remains intentionally local to the active runtime session.
+
+### Rollback Notes
+
+- Revert `Assets/_Project/Code/Hearth/HearthMinimalReturnController.cs`.
+- Revert `Assets/_Project/Code/Hearth/HearthAnchorPlacementSlot.cs`.
+- Remove the Wave `011C` entry from the top of `Docs/BUILD_LOG.md`.
 
 ## 2026-05-16 - Wave 011B-FixPass2: Hearth Return Collider Correction
 
@@ -1422,19 +1476,6 @@ Created initial room and puzzle spec documents for `House With the Switches` usi
 - Delete `Docs/ROOM_SPECS/House_With_The_Switches.md`.
 - Delete `Docs/PUZZLE_SPECS/House_With_The_Switches.md`.
 - Remove this **Wave 007** entry from the top of `Docs/BUILD_LOG.md`.
-
-## Build Log Rules
-1. Newest entries at the top.
-2. Editor tooling waves must include:
-- menu path
-- tool purpose
-- created/updated assets
-- manual Unity validation steps
-- rollback steps
-
-
-
----
 
 ## 2026-05-16 - Wave 006B: Edit-mode material leak warning fix
 

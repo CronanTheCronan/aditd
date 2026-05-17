@@ -119,6 +119,7 @@ namespace ADoorInsideTheDark.Hearth
 
         private void Awake()
         {
+            ResetRuntimeState();
             RefreshSceneState();
         }
 
@@ -244,6 +245,15 @@ namespace ADoorInsideTheDark.Hearth
 
             ApplyFireFeedback();
             ApplyNextDoorFeedback();
+        }
+
+        private void ResetRuntimeState()
+        {
+            _isCarryingGreenThermos = false;
+            _greenThermosPlaced = false;
+            _nextDoorAvailable = false;
+            _confirmationTimer = 0f;
+            _nextDoorAcknowledgeTimer = 0f;
         }
 
         private void ApplyFireFeedback()

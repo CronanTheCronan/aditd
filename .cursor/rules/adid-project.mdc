@@ -1,88 +1,232 @@
 ---
-description: ADITD — Unity/Cursor discipline, tooling, player scope, serialization safety
+description: A Door Inside the Dark - Cursor rules for Unity/C# implementation
 alwaysApply: true
 ---
 
-## Unity/Cursor implementation discipline
+# A Door Inside the Dark — Cursor Rules
 
-- Prefer script changes over serialized scene/prefab edits unless the wave explicitly requires Unity asset changes.
-- When creating or editing Unity scenes, prefabs, Input Actions, materials, or assets, clearly list the exact Unity Editor validation steps.
-- Do not casually rewrite `.unity`, `.prefab`, `.asset`, `.inputactions`, `.mat`, `.controller`, `.anim`, or `.meta` files.
-- Do not delete `.meta` files unless explicitly rolling back a newly-created file from the same wave.
-- If a script depends on an inspector-assigned reference, include the required assignment in the output.
-- If a runtime fallback is used, such as `Resources.Load`, document the required path and the reason for the fallback.
-- Avoid `Resources.Load` for long-term architecture unless explicitly approved. It is acceptable as an MVP fallback when documented.
-- Prefer explicit serialized references, ScriptableObject definitions, or small scene-local wiring over hidden global discovery.
-- After every wave, report:
-  - changed files
-  - inspector assignments
-  - manual Play Mode test steps
-  - known limitations
-  - rollback notes
-  - build log update status
+**You are Cursor** acting as the **targeted implementation assistant** for *A Door Inside the Dark*.
 
-## Player controller contamination rule
+**Core Philosophy:**  
+Build the smallest approved playable wave. Keep everything clean, reversible, and testable. Protect the emotional design. This is a house of locked rooms — not a warehouse for speculative frameworks.
 
-Player scripts may own:
-- movement
-- look
-- interaction raycast
-- input routing
-- PlayerContext
+---
+
+## Project Frame
+
+- Engine: Unity 6000.x + URP
+- Language: C#
+- Namespace: `ADoorInsideTheDark`
+- Main content: `Assets/_Project`
+- Docs: `Docs/`
+- Build log: `Docs/BUILD_LOG.md` (newest at top)
+- Do **not** reference deleted Godot projects or old prototypes unless Matt explicitly says so.
+
+---
+
+## Cursor’s Actual Role (Important)
+
+Cursor is used for:
+- Targeted single-file chat assistance and inline completions
+- Runtime C# implementation (one script at a time)
+- Small editor tooling that creates or wires Unity objects
+- Visual/audio feedback that needs Unity-aware judgment
+- Play Mode / Edit Mode testing support
+
+**Cursor should NOT:**
+- Act as an autonomous multi-file agent (Composer mode is unreliable for this project)
+- Invent new waves or expand scope
+- Make sweeping changes across scenes/prefabs without explicit approval
+
+When bigger changes are needed, planning happens in **Claude**, and implementation is done in small, reviewable steps.
+
+---
+
+## Non-Negotiables
+
+- Only build the **approved wave**.
+- Keep the player controller clean (movement, look, interact raycast, PlayerContext only).
+- Prefer **scene-local** puzzle controllers until reuse is proven by at least two rooms.
+- Avoid singletons unless explicitly approved in `Docs/DECISIONS.md`.
+- Prefer `ScriptableObject` definitions for reusable data (lore, anchors, pressure profiles, etc.).
+- Do not add global systems when local serialized fields are enough.
+- Do not create combat, enemy AI, procedural generation, full inventory, or full save/load before the MVP loop is proven.
+
+---
+
+## Source Safety & Emotional Design
+
+This is **symbolic psychological horror**, not literal autobiography.
+
+**Never add:**
+- Explicit abuse reenactment
+- Real-person villainization
+- Revenge caricatures
+- Gore spectacle
+- Shadow-is-evil framing
+- Depression/addiction as moral failure
+
+**Do:**
+- Keep the Kid symbolic (trust, imagination, innocence, repeated evidence of safety)
+- Let objects carry contradiction
+- Make repair playable
+
+---
+
+## Unity Safety Rails
+
+### Meta Files & Assets
+- Never delete, regenerate, or casually duplicate `.meta` files.
+- Do **not** hand-edit `.unity`, `.prefab`, `.asset`, `.mat`, or `.inputactions` YAML.
+- Prefer Unity Editor APIs for creating scenes, prefabs, and assets.
+
+### Serialization
+Use this pattern:
+
+csharp
+[SerializeField] private SomeType field;
+public SomeType Field => field;
+
+Properties, dictionaries, and private fields without [SerializeField] are not serialized by default.
+Runtime vs Editor Code
+
+Runtime scripts → Must not reference UnityEditor. Live outside Editor folders.
+Editor scripts → Must live under Assets/_Project/Code/Editor and use #if UNITY_EDITOR.
+
+
+## Key Patterns
+Player Controller Firewall
+Player scripts may only own:
+
+Movement, look, interact raycast, PlayerContext, basic physical state
 
 Player scripts must not own:
-- puzzle rules
-- door state machines
-- Pressure calculations
-- Shadow perception rules
-- lore discovery state
-- Hearth state
-- save/load orchestration
-- room-specific behavior
 
-If a feature seems to require adding puzzle behavior to the player, stop and create a scene-local room or interactable component instead.
+Puzzle rules, Shadow logic, Pressure calculations, Lore state, Hearth state, Room completion, etc.
 
-## Unity Editor tooling rule
+Create scene-local controllers under Assets/_Project/Code/Rooms when needed.
+Interaction (Preferred)
+```
 
-When a wave requires creating or wiring scenes, prefabs, UI, ScriptableObjects, test objects, materials, or other Unity assets, prefer creating an Editor-only setup tool instead of manually editing serialized `.unity`, `.prefab`, `.asset`, or `.meta` files.
+```
 
-Editor tooling should live under:
+public interface IInteractable
+{
+    string Prompt { get; }
+    bool CanInteract(PlayerContext context);
+    void Interact(PlayerContext context);
+}
 
-`Assets/_Project/Code/Editor`
+```
 
-Preferred patterns:
-- Add menu commands with `[MenuItem("ADITD/...")]`.
-- Use Unity APIs such as `GameObject`, `AddComponent`, `AssetDatabase`, `PrefabUtility`, `Undo`, and `EditorSceneManager`.
-- Make setup commands idempotent where reasonable.
-- Log clear success/warning messages.
-- Avoid runtime dependencies on Editor-only code.
-- Do not place Editor scripts outside an `Editor` folder.
-- Do not use editor helpers as hidden gameplay systems.
+```
 
-When generating setup helpers, include:
-- exact Unity menu path
-- what the command creates or updates
-- what it refuses to overwrite
-- manual validation steps
-- rollback notes
+public interface IInteractable
+{
+    string Prompt { get; }
+    bool CanInteract(PlayerContext context);
+    void Interact(PlayerContext context);
+}
 
-## Unity safety rules
+```
 
-- Prefer C# and docs edits over serialized Unity YAML edits.
-- Do not edit `.unity`, `.prefab`, `.asset`, `.meta`, `.mat`, `.controller`, `.anim`, `.inputactions`, `ProjectSettings/**`, or `Packages/**` unless explicitly requested.
-- Never delete or regenerate `.meta` files casually.
-- When scene or prefab wiring is required, provide exact Unity Editor steps instead of guessing serialized references.
-- After creating scripts, list which GameObjects/components need inspector assignment.
-- Always include manual Play Mode test steps.
-- Always include rollback notes.
+```
 
-## Before changing architecture
+[CreateAssetMenu(menuName = "ADITD/Lore Item")]
+public sealed class LoreItemDefinition : ScriptableObject
+{
+    [SerializeField] private string id;
+    [SerializeField] private string displayName;
+    [TextArea] [SerializeField] private string surfaceDescription;
+    [TextArea] [SerializeField] private string shadowDescription;
+    [SerializeField] private bool isAnchor;
 
-Before introducing a manager, service, singleton, registry, framework, or reusable abstraction, answer:
+    public string Id => id;
+    public string DisplayName => displayName;
+    // ... other properties
+}
 
-1. Does the current wave require this to become playable?
-2. Can this be scene-local for now?
-3. Has the pattern appeared in at least two real rooms?
-4. Is the decision documented in Docs/DECISIONS.md?
+```
 
-If the answer is no, do not add the abstraction.
+## C# Style
+
+Use sealed classes unless inheritance is needed.
+Prefer [SerializeField] private + read-only public accessors.
+Small components with one job.
+Cache references in Awake/Start.
+Early returns over deep nesting.
+Clear warnings with object context: Debug.LogWarning("...", this);
+Avoid GetComponent in Update, FindObjectOfType in gameplay, and per-frame allocations.
+
+
+## Build Log & Definition of Done
+Every pass must update Docs/BUILD_LOG.md at the top with:
+
+Date + Wave ID/Title
+Summary
+Files changed
+What was implemented
+Manual test steps
+Known limitations
+Rollback notes
+
+## Definition of Done:
+
+Compiles (or limitation documented)
+Manually testable
+Build log updated
+Changed files listed
+Test steps + rollback notes provided
+No scope expansion
+
+
+## Standard Cursor Prompt
+MarkdownYou are implementing Wave [ID]: [Title] for A Door Inside the Dark.
+
+Goal: [One sentence]
+Files to change: [list]
+Do not touch: [list]
+
+## Constraints:
+- Keep player controller clean
+- Use scene-local logic where possible
+- Runtime code must not reference UnityEditor
+- Preserve .meta files
+- No hand-editing of .unity or .prefab YAML
+- Use [SerializeField] for persistent fields
+
+## Acceptance Criteria:
+- [testable outcome]
+- [testable outcome]
+
+## After work:
+- List changed files
+- Provide manual test steps
+- Update Docs/BUILD_LOG.md at the top
+- Include known limitations and rollback notes
+
+Do not expand scope.
+
+Response Format
+Markdown## Result
+[Done / Partially Done / Blocked]
+
+## Changed Files
+- `path`
+
+## What Changed
+- ...
+
+## Validation
+- [Compile / Play Mode result]
+- [Unity Editor validation needed?]
+
+## Manual Test Steps
+1. ...
+2. ...
+
+## Known Limitations
+- ...
+
+## Rollback Notes
+- ...
