@@ -1,5 +1,124 @@
 # Build Log
 
+## 2026-05-16 - Wave 013B-RetryPrep: Bus of Names Retry Constraint Brief
+
+### Summary
+
+Docs-only retry constraint brief for safely reattempting the Bus of Names micro-room runtime work after rollback.
+
+### Files Changed
+
+- `Docs/AGENT_REPORTS/Wave013B_RetryConstraints.md`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Added `Docs/AGENT_REPORTS/Wave013B_RetryConstraints.md` as a short retry brief to preserve the failure lesson from Wave `013B` and the rollback state from Wave `013B-RecoveryPass`.
+- Recorded the last verified good state so the next runtime attempt starts from a clear docs-only baseline.
+- Split a future Bus of Names runtime retry into exactly three constrained slices: `013B-1`, `013B-2`, and `013B-3`.
+- Defined strict allowed-file lists, an explicit do-not-touch list, per-slice acceptance gates, a manual verification checklist, and parked items that must remain out of scope.
+
+### Manual Test Steps
+
+1. Open `Docs/AGENT_REPORTS/Wave013B_RetryConstraints.md`.
+2. Confirm the document explains the recovery context and last verified good state.
+3. Confirm the retry is split into exactly three slices.
+4. Confirm each slice has a goal and allowed file list.
+5. Confirm the explicit do-not-touch list includes `PlayerInteractor`, Shadow core, Input Actions, Hearth files, `ProjectSettings`, and `Packages`.
+6. Confirm the manual verification checklist requires checking both the Bus scene and existing Hearth loop.
+7. Confirm no runtime files, scenes, or project settings were changed.
+8. Open `Docs/BUILD_LOG.md` and confirm the new Wave `013B-RetryPrep` entry is at the top.
+
+### Known Limitations
+
+- Docs only; no runtime implementation.
+
+### Rollback Notes
+
+- Delete `Docs/AGENT_REPORTS/Wave013B_RetryConstraints.md`.
+- Remove the Wave `013B-RetryPrep` entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 013B-RecoveryPass: Remove Unverified Bus of Names Runtime Work
+
+### Summary
+
+Emergency rollback pass to restore the repository to the last verified good state by removing attempted Wave 013B Bus of Names runtime implementation while preserving verified docs through Wave 013A-FixPass.
+
+### Files Changed
+
+- `Assets/_Project/Code/Editor/Wave013BBusOfNamesMicroRoomSetup.cs`
+- `Assets/_Project/Code/Editor/Wave013BBusOfNamesMicroRoomSetup.cs.meta`
+- `Assets/_Project/Code/Rooms/BusOfNamesFalseLabelInteractable.cs`
+- `Assets/_Project/Code/Rooms/BusOfNamesFalseLabelInteractable.cs.meta`
+- `Assets/_Project/Code/Rooms/BusOfNamesMicroRoomController.cs`
+- `Assets/_Project/Code/Rooms/BusOfNamesMicroRoomController.cs.meta`
+- `Assets/_Project/Scenes/Wave013B_BusOfNamesMicroRoom.unity`
+- `Assets/_Project/Scenes/Wave013B_BusOfNamesMicroRoom.unity.meta`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Removed the unverified Wave 013B Bus of Names runtime files and generated scene assets from the working tree.
+- Removed the Wave 013B and Wave 013B-FixPass log entries so the build log again reflects only verified work plus this recovery pass.
+- Preserved the verified `Docs/ROOM_SPECS/BusOfNames_MicroRoom.md` and the verified Wave 013A-FixPass record.
+- Left protected Hearth, Shadow, interaction, input, package, and project settings files untouched because they showed no active git modifications in this recovery pass.
+
+### Manual Test Steps
+
+1. Run `git status --short` and confirm no Wave 013B runtime files remain.
+2. Open `Docs/BUILD_LOG.md` and confirm the newest verified content after this entry is Wave `013A-FixPass`.
+3. Open `Docs/ROOM_SPECS/BusOfNames_MicroRoom.md` and confirm the verified clarity edits remain intact.
+4. Open Unity and let the project reimport.
+5. Confirm the Console has no compile errors tied to Bus of Names runtime classes or the removed Wave 013B scene.
+6. Confirm verified Hearth content from Wave `011B` through `012B-FixPass` still opens and behaves as expected.
+
+### Known Limitations
+
+- Compile confirmation from this pass is limited to command-line C# build checks; Unity editor verification still needs one in-editor confirmation pass.
+- The Bus of Names spec remains as docs only by design; no runtime implementation should exist after this recovery.
+
+### Rollback Notes
+
+- Restore the removed Wave 013B runtime files only if Matt explicitly chooses to recover that abandoned attempt.
+- Revert this recovery entry from the top of `Docs/BUILD_LOG.md` if the project history needs to be rewritten differently later.
+
+## 2026-05-16 - Wave 013A-FixPass: Bus of Names Spec Clarity Edits
+
+### Summary
+
+Docs-only clarity edits after Gemini review for the Bus of Names micro-room spec.
+
+### Files Changed
+
+- `Docs/ROOM_SPECS/BusOfNames_MicroRoom.md`
+- `Docs/BUILD_LOG.md`
+
+### What Was Updated
+
+- Clarified that Bus of Names is only the first candidate destination implied by the existing Hearth `E - Next Door` exit stub, as design intent only.
+- Added a brief arrival-orientation note so the entrance frame remains readable for a short moment before the bus-bedroom distortion asserts itself.
+- Tightened the wrong-form feedback wording so forceful interaction reads as restrained environmental resistance rather than a broken no-op, with graybox-safe examples only.
+- Kept Shadow and reveal language objective and environmental by describing a bind, knot, tension point, or threshold obstruction instead of therapeutic or identity-framing language.
+
+### Manual Test Steps
+
+1. Open `Docs/ROOM_SPECS/BusOfNames_MicroRoom.md`.
+2. Confirm the Hearth exit stub connection is stated as design intent only.
+3. Confirm the entrance orientation note is present.
+4. Confirm wrong-form feedback is described as environmental resistance, not a broken no-op.
+5. Confirm Shadow and player-facing wording remains objective and non-therapeutic.
+6. Confirm there are no code references, scene transition requirements, save/load, inventory, or progression routing.
+7. Confirm the file remains readable in under two minutes.
+
+### Known Limitations
+
+- Docs only; no implementation yet.
+
+### Rollback Notes
+
+- Revert `Docs/ROOM_SPECS/BusOfNames_MicroRoom.md`.
+- Remove the Wave 013A-FixPass entry from the top of `Docs/BUILD_LOG.md`.
+
 ## 2026-05-16 - Wave 013A: Bus of Names First Micro-Room Spec
 
 ### Summary

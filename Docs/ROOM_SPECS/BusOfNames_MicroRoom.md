@@ -7,7 +7,7 @@ Status:
 Ready for critique
 
 ## Purpose
-Define the smallest first playable Bus of Names chamber that could eventually sit beyond the Hearth `E - Next Door` stub.
+Define the smallest first playable Bus of Names chamber as the first candidate destination implied by the existing Hearth `E - Next Door` stub.
 Keep the beat limited to one symbolic room promise: false labels are present, one label distorts the way forward, and Shadow helps the player notice a knot rather than treat the label as truth.
 
 ## Decision Rationale
@@ -17,14 +17,14 @@ Keep the beat limited to one symbolic room promise: false labels are present, on
 - It carries more specific emotional-play clarity than a Threshold connector, which risks feeling like transit instead of the first true encounter with false naming.
 
 ## Observable Player Promise
-The player steps through the next door into a cramped threshold that feels part bus aisle and part bedroom edge, where childish false labels hang in view like misplaced name tags. One label visibly warps the only way forward until Shadow reveals that the label is tied to a knot in the space rather than being the truth, and the room signals that lashing out at it is not the right answer.
+The player steps through the next door into a cramped threshold that feels part bus aisle and part bedroom edge, where childish false labels hang in view like misplaced name tags. The entrance door or frame remains visually stable and readable for a short moment so the player can register where they came from before the bus-bedroom distortion asserts itself. One label visibly warps the only way forward until Shadow reveals that the label is tied to a knot in the space, and the room signals that lashing out at it is not the right answer.
 
 ## Smallest Future Playable Beat
-1. The player enters one small Bus of Names micro-room directly after the Hearth next-door handoff and can immediately see a single blocked threshold ahead.
+1. The player enters one small Bus of Names micro-room as the first candidate destination implied by the Hearth next-door stub and can immediately see a single blocked threshold ahead.
 2. In the room, one false label is clearly visible as an object or sign, and its presence makes the threshold feel narrowed, bent, or wrongly named.
-3. Ordinary observation establishes that the false label is the main point of attention and that forcing past it is not currently the intended read.
-4. Shadow reveals one knot-like truth behind or within the false label, making clear that the label is attached to something tangled rather than describing the player.
-5. A restrained cue shows that tearing, smashing, or retaliating at the label is not the answer, while still keeping the room tense and uneasy.
+3. Ordinary observation establishes that the false label is the main point of attention, while the entrance frame remains readable just long enough to orient the player's point of origin before the distortion takes over.
+4. Shadow reveals one knot-like bind, string, tension point, or threshold obstruction behind or within the false label, making the problem read as a visible snag in the room.
+5. If the player tries to tear, smash, shove, or force the false label, the room answers with restrained environmental resistance rather than a dead no-op. Acceptable future cues include localized jitter, tightened space, a low hum, the label pulling taut, or the threshold resisting. This can conceptually reuse the established local wrong-form feedback pattern from Weight of the Door without implying a shared system.
 6. The beat ends with the room newly legible but not fully resolved, preserving this as one future graybox encounter rather than a full chapter puzzle.
 
 ## Tone & Source-Safety Constraints
