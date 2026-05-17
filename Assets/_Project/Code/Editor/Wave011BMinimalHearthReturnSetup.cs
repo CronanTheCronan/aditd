@@ -16,6 +16,8 @@ namespace ADoorInsideTheDark.Editor
         private static readonly Vector3 PickupColliderSize = new(5.94f, 2.12f, 5.94f);
         private static readonly Vector3 PlacementColliderCenter = new(0f, 0.67f, 0.63f);
         private static readonly Vector3 PlacementColliderSize = new(2.1f, 3.34f, 2.82f);
+        private static readonly Vector3 ExitColliderCenter = new(0f, 0f, 0.24f);
+        private static readonly Vector3 ExitColliderSize = new(1.82f, 1.0f, 1.04f);
 
         [MenuItem(MenuPath)]
         public static void CreateOrRecreateScene()
@@ -34,7 +36,6 @@ namespace ADoorInsideTheDark.Editor
             ConfigureSceneLighting(scene);
             BuildPlayer(scene);
             BuildRoom(roomRoot.transform, out HearthMinimalReturnController controller);
-            WireController(controller);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -134,6 +135,32 @@ namespace ADoorInsideTheDark.Editor
             ApplyColor(slotHighlight, new Color(0.76f, 0.65f, 0.34f, 1f));
             slotHighlight.GetComponent<Collider>().enabled = false;
 
+            GameObject exitFrameLeft = CreatePrimitive(parent, "ExitFrameLeft", PrimitiveType.Cube, new Vector3(-1.0f, 1.1f, 3.72f), new Vector3(0.26f, 2.2f, 0.28f));
+            GameObject exitFrameRight = CreatePrimitive(parent, "ExitFrameRight", PrimitiveType.Cube, new Vector3(1.0f, 1.1f, 3.72f), new Vector3(0.26f, 2.2f, 0.28f));
+            GameObject exitLintel = CreatePrimitive(parent, "ExitLintel", PrimitiveType.Cube, new Vector3(0f, 2.32f, 3.72f), new Vector3(2.26f, 0.24f, 0.28f));
+            ApplyColor(exitFrameLeft, new Color(0.33f, 0.29f, 0.27f, 1f));
+            ApplyColor(exitFrameRight, new Color(0.33f, 0.29f, 0.27f, 1f));
+            ApplyColor(exitLintel, new Color(0.33f, 0.29f, 0.27f, 1f));
+
+            GameObject exitDoorRoot = CreatePrimitive(parent, "NextDoorAffordance", PrimitiveType.Cube, new Vector3(0f, 1.08f, 3.78f), new Vector3(1.4f, 2.1f, 0.14f));
+            ApplyColor(exitDoorRoot, new Color(0.18f, 0.21f, 0.25f, 1f));
+            ConfigureInteractionCollider(exitDoorRoot, ExitColliderCenter, ExitColliderSize);
+            HearthExitStubInteractable exitInteractable = exitDoorRoot.AddComponent<HearthExitStubInteractable>();
+
+            GameObject exitCue = CreatePrimitive(parent, "NextDoorCue", PrimitiveType.Cube, new Vector3(0f, 2.72f, 3.55f), new Vector3(0.32f, 0.32f, 0.22f));
+            exitCue.GetComponent<Collider>().enabled = false;
+            ApplyColor(exitCue, new Color(0.89f, 0.78f, 0.46f, 1f));
+
+            GameObject exitCueLightGo = new("NextDoorCueLight");
+            exitCueLightGo.transform.SetParent(parent, false);
+            exitCueLightGo.transform.localPosition = new Vector3(0f, 2.56f, 3.18f);
+            Light exitCueLight = exitCueLightGo.AddComponent<Light>();
+            exitCueLight.type = LightType.Point;
+            exitCueLight.range = 3.2f;
+            exitCueLight.intensity = 0f;
+            exitCueLight.color = new Color(0.89f, 0.78f, 0.46f, 1f);
+            exitCueLight.shadows = LightShadows.None;
+
             controller = AddOrGetController(parent.gameObject);
             HearthAnchorPlacementSlot placementSlot = slotRoot.AddComponent<HearthAnchorPlacementSlot>();
 
@@ -143,7 +170,10 @@ namespace ADoorInsideTheDark.Editor
             controllerSo.FindProperty("_placedThermosRoot").objectReferenceValue = placedThermos;
             controllerSo.FindProperty("_hearthFireLight").objectReferenceValue = fireLight;
             controllerSo.FindProperty("_hearthFireRenderer").objectReferenceValue = fire.GetComponent<Renderer>();
-            controllerSo.FindProperty("_showDebugOverlay").boolValue = true;
+            controllerSo.FindProperty("_nextDoorCueRoot").objectReferenceValue = exitCue;
+            controllerSo.FindProperty("_nextDoorVisual").objectReferenceValue = exitDoorRoot.transform;
+            controllerSo.FindProperty("_nextDoorCueLight").objectReferenceValue = exitCueLight;
+            controllerSo.FindProperty("_showDebugOverlay").boolValue = false;
             controllerSo.ApplyModifiedPropertiesWithoutUndo();
 
             SerializedObject pickupInteractableSo = new(pickupInteractable);
@@ -156,20 +186,13 @@ namespace ADoorInsideTheDark.Editor
             SetObjectArray(placementSlotSo.FindProperty("_highlightRenderers"), slotHighlight.GetComponent<Renderer>());
             placementSlotSo.ApplyModifiedPropertiesWithoutUndo();
 
+            SerializedObject exitInteractableSo = new(exitInteractable);
+            exitInteractableSo.FindProperty("_controller").objectReferenceValue = controller;
+            exitInteractableSo.ApplyModifiedPropertiesWithoutUndo();
+
             placedThermos.SetActive(false);
             slotHighlight.SetActive(false);
-        }
-
-        private static void WireController(HearthMinimalReturnController controller)
-        {
-            if (controller == null)
-            {
-                return;
-            }
-
-            SerializedObject controllerSo = new(controller);
-            controllerSo.FindProperty("_showDebugOverlay").boolValue = true;
-            controllerSo.ApplyModifiedPropertiesWithoutUndo();
+            exitCue.SetActive(false);
         }
 
         private static HearthMinimalReturnController AddOrGetController(GameObject roomRoot)

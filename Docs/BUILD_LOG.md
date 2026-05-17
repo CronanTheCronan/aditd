@@ -1,5 +1,197 @@
 # Build Log
 
+## 2026-05-16 - Wave 013A: Bus of Names First Micro-Room Spec
+
+### Summary
+
+Docs-only wave selecting and lightly specifying the next chamber after the Hearth exit stub.
+
+### Files Changed
+
+- `Docs/ROOM_SPECS/BusOfNames_MicroRoom.md`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Chosen Bus of Names micro-room spec with decision rationale and observable player promise.
+- Defined the smallest future playable beat as one symbolic chamber with one false label, one blocked threshold, one Shadow-revealed knot, and one restrained cue that destruction is not the answer.
+- Recorded explicit non-goals and source-safety constraints so the next wave stays small, symbolic, and non-literal.
+
+### Manual Test Steps
+
+1. Open `Docs/ROOM_SPECS/BusOfNames_MicroRoom.md`.
+2. Read the Decision Rationale section and confirm it explains why Bus of Names was chosen.
+3. Read the Observable Player Promise section and confirm it describes a concrete, testable future behavior.
+4. Read the Smallest Future Playable Beat section and confirm it stays small: one micro-room, one false label, one Shadow-revealed knot, one restrained cue.
+5. Verify the file stays under 1.5 pages and contains none of the prohibited elements.
+6. Confirm a future implementer could read this spec and immediately understand the smallest playable version.
+
+### Known Limitations
+
+- Docs only; no implementation yet.
+
+### Rollback Notes
+
+- Delete `Docs/ROOM_SPECS/BusOfNames_MicroRoom.md`.
+- Remove the Wave 013A entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 012B-FixPass: Exit Stub Collider + Debug Cleanup
+
+### Summary
+
+Tightened the generated Hearth exit stub interaction volume to match the visible door more closely and cleaned up the minimal debug-overlay wiring so recreated Wave 011B scenes no longer force debug UI on while still exposing the `Next Door Available` state when developers manually enable it.
+
+### Files Changed
+
+- `Assets/_Project/Code/Hearth/HearthMinimalReturnController.cs`
+- `Assets/_Project/Code/Editor/Wave011BMinimalHearthReturnSetup.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Corrected the generated exit stub collider values in `Wave011BMinimalHearthReturnSetup` so the recreated door interaction box stays near the visible human-height door instead of extending below the floor and above the ceiling.
+- Removed the duplicate `WireController` debug-overlay setup because the generated scene already assigns `_showDebugOverlay` directly during room construction.
+- Updated `HearthMinimalReturnController` so the debug `OnGUI` path still renders the `State: Next Door Available` line when that state is active, even though the earlier confirmation text has already cleared.
+- Changed the default `_showDebugOverlay` serialized value to `false` in both the controller and generated scene setup, preserving the overlay for manual Inspector testing without forcing it on in recreated scenes.
+
+### Menu Path
+
+- `ADITD/Setup/Recreate Wave 011B Minimal Hearth Return`
+
+### Created or Updated Assets
+
+- Running the menu command in the Unity Editor creates or overwrites: `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity`.
+
+### Manual Test Steps
+
+1. Open Unity and confirm no compile errors.
+2. Run `ADITD/Setup/Recreate Wave 011B Minimal Hearth Return`.
+3. Open `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity`.
+4. Inspect the generated exit door `BoxCollider` and confirm its y-range visually matches the door instead of spanning floor-to-ceiling-plus.
+5. Enter Play Mode.
+6. Confirm no `E - Next Door` prompt appears before placing the Green Thermos.
+7. Claim the Green Thermos with `E`.
+8. Place it on the highlighted shelf slot with `E`.
+9. Wait for the confirmation beat to settle or fade.
+10. Approach the exit/door affordance.
+11. Confirm the prompt reads exactly `E - Next Door`.
+12. Press `E`.
+13. Confirm only a local acknowledgment cue occurs.
+14. Confirm no transition, loading, saving, generation, or routing occurs.
+15. Confirm the thermos cannot be duplicated.
+16. If `_showDebugOverlay` is manually enabled in the Inspector, confirm the overlay can display the `Next Door Available` state.
+17. Confirm no compile errors appear.
+
+### Known Limitations
+
+- Graybox-only fix pass; the exit stub still produces only local visual acknowledgment with no scene transition, save/load, persistence, or progression routing.
+- The debug overlay remains `OnGUI`-based and is intended only for manual development inspection.
+- Collider tuning remains attached to the scaled door root rather than a separate dedicated child volume to keep this fix pass minimal.
+
+### Rollback Notes
+
+- Revert `Assets/_Project/Code/Hearth/HearthMinimalReturnController.cs`.
+- Revert `Assets/_Project/Code/Editor/Wave011BMinimalHearthReturnSetup.cs`.
+- Recreate or remove `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity` if you want to remove the corrected exit stub collider and debug-default changes from the generated scene.
+- Remove the Wave 012B-FixPass entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 012B: Hearth Exit Stub Implementation
+
+### Summary
+
+Implemented the smallest playable Hearth exit stub in the Wave 011B graybox so a single visible door affordance becomes interactable with `E - Next Door` only after Green Thermos placement and the existing confirmation beat has settled, with no transition, loading, save/load, or broader progression routing.
+
+### Files Changed
+
+- `Assets/_Project/Code/Hearth/HearthMinimalReturnController.cs`
+- `Assets/_Project/Code/Hearth/HearthExitStubInteractable.cs`
+- `Assets/_Project/Code/Editor/Wave011BMinimalHearthReturnSetup.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Extended `HearthMinimalReturnController` to track a short post-placement confirmation hold, then unlock a scene-local next-door interaction window without changing the existing Green Thermos claim/place loop.
+- Added `HearthExitStubInteractable` as a minimal prompt provider and interactable that surfaces `E - Next Door` only when the controller marks the exit stub as available.
+- Updated `Wave011BMinimalHearthReturnSetup` to recreate the Hearth graybox with one visible front-wall door affordance, a subtle cue object/light that activates only after the placement beat settles, and a local acknowledgment response that slightly pulses the cue and nudges the door without transitioning anywhere.
+- Preserved the Wave 011B-FixPass2 widened root collider approach for the thermos pickup and placement slot, and kept `PlayerInteractor`, inventory, save/load, and broader Hearth architecture unchanged.
+
+### Menu Path
+
+- `ADITD/Setup/Recreate Wave 011B Minimal Hearth Return`
+
+### Created or Updated Assets
+
+- Running the menu command in the Unity Editor creates or overwrites: `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity`.
+
+### Manual Test Steps
+
+1. Open Unity and confirm there are no compile errors in the Console.
+2. Run `ADITD/Setup/Recreate Wave 011B Minimal Hearth Return`.
+3. Open `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity`.
+4. Enter Play Mode.
+5. Confirm the graybox exit/door affordance is visible in the Hearth space.
+6. Confirm no `E - Next Door` prompt appears before placing the Green Thermos.
+7. Claim the Green Thermos with `E`.
+8. Place it on the highlighted shelf slot with `E`.
+9. Wait for the confirmation beat to settle or fade.
+10. Approach the exit/door affordance.
+11. Confirm the prompt reads exactly `E - Next Door`.
+12. Press `E`.
+13. Confirm only a local acknowledgment cue occurs.
+14. Confirm the scene does not transition, load, save, generate, or route anywhere.
+15. Confirm the thermos cannot be duplicated.
+16. Confirm no compile errors appear.
+
+### Known Limitations
+
+- Graybox-only implementation using primitive geometry, a small cue light, and local door nudge feedback.
+- No scene transition, level loading, save/load, persistence, chapter routing, or next-room generation exists in this wave.
+- No audio cue was added; the acknowledgment is currently visual-only and scene-local.
+
+### Rollback Notes
+
+- Delete or revert `Assets/_Project/Code/Hearth/HearthExitStubInteractable.cs`.
+- Revert `Assets/_Project/Code/Hearth/HearthMinimalReturnController.cs`.
+- Revert `Assets/_Project/Code/Editor/Wave011BMinimalHearthReturnSetup.cs`.
+- Recreate or remove `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity` if you want to remove the exit stub affordance from the generated scene.
+- Remove the Wave 012B entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 012A: Hearth Exit / Return-to-Next-Door Stub Spec
+
+### Summary
+
+Added a docs-only stub spec defining the single exit/door prompt that appears after Green Thermos placement, with a strictly local acknowledgment and no scene transition, loading, save point, or broader Hearth progression.
+
+### Files Changed
+
+- `Docs/ROOM_SPECS/Hearth_ExitStub.md`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Added `Docs/ROOM_SPECS/Hearth_ExitStub.md` as a short implementation-ready room spec for `room.hearth.exit_stub`.
+- Defined the required post-placement sequence where the existing Green Thermos confirmation beat settles first, then one forward-facing door affordance appears.
+- Locked the prompt text to `E - Next Door` and constrained the interaction result to a minimal local cue only, with no transition, loading, save/load, new room generation, inventory expansion, or controller changes.
+
+### Manual Test Steps
+
+1. Open `Docs/ROOM_SPECS/Hearth_ExitStub.md`.
+2. Read the Observable Player Sequence section.
+3. Confirm every step is concrete and testable.
+4. Verify the spec contains the required Tone & Constraints section.
+5. Confirm there are no prohibited elements: scene transition, save/load, inventory, chapter select, multiple exits, new controllers, or `PlayerInteractor` changes.
+6. Confirm the file can be read in under two minutes and the next-door behavior is unambiguous.
+
+### Known Limitations
+
+- Docs-only wave; no playable door or transition exists yet.
+- No implementation, scene wiring, audio behavior, or interaction asset changes were included in this wave.
+
+### Rollback Notes
+
+- Delete `Docs/ROOM_SPECS/Hearth_ExitStub.md`.
+- Remove the Wave 012A entry from the top of `Docs/BUILD_LOG.md`.
+
 ## 2026-05-16 - Wave 011B-FixPass2: Hearth Return Collider Correction
 
 ### Summary
