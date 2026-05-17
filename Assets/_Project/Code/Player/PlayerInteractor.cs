@@ -98,7 +98,13 @@ namespace ADoorInsideTheDark.Player
                 return;
             }
 
-            string promptText = inspectable != null ? "E Inspect" : "E Interact";
+            string promptText = GetPromptText(hit.collider.transform, inspectable, interactable);
+            if (string.IsNullOrEmpty(promptText))
+            {
+                _promptView.Hide();
+                return;
+            }
+
             _promptView.SetPrompt(promptText);
         }
 
@@ -185,6 +191,24 @@ namespace ADoorInsideTheDark.Player
         private static IInteractable FindInteractable(Transform hitTransform)
         {
             return hitTransform.GetComponentInParent<IInteractable>();
+        }
+
+        private string GetPromptText(Transform hitTransform, IInspectable inspectable, IInteractable interactable)
+        {
+            if (inspectable != null)
+            {
+                return "E Inspect";
+            }
+
+            if (interactable == null)
+            {
+                return string.Empty;
+            }
+
+            IInteractionPromptProvider promptProvider = hitTransform.GetComponentInParent<IInteractionPromptProvider>();
+            return promptProvider != null
+                ? promptProvider.GetInteractionPrompt(_context)
+                : "E Interact";
         }
 
         private void CacheInputActions()

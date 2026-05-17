@@ -1,5 +1,221 @@
 # Build Log
 
+## 2026-05-16 - Wave 011B-FixPass2: Hearth Return Collider Correction
+
+### Summary
+
+Replaced the failed child-collider affordance pass with direct oversized root `BoxCollider` hit areas for the Green Thermos pickup and Hearth shelf placement slot so front-facing interaction is reliable in the recreated Wave 011B graybox scene.
+
+### Files Changed
+
+- `Assets/_Project/Code/Editor/Wave011BMinimalHearthReturnSetup.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Removed the previous child interaction-volume approach from `Wave011BMinimalHearthReturnSetup` after it proved unreliable because the generated child colliders inherited the small scaled parent transforms.
+- Configured the Green Thermos pickup root to replace its primitive collider with an oversized forward-biased `BoxCollider` directly on the interactable object.
+- Configured the Hearth placement slot root to replace its primitive collider with a larger front-facing `BoxCollider` directly on the interactable object.
+- Kept `PlayerInteractor`, prompts, carry/place state, and no-duplication behavior unchanged so the fix stays contained to Wave 011B scene generation.
+
+### Menu Path
+
+- `ADITD/Setup/Recreate Wave 011B Minimal Hearth Return`
+
+### Created or Updated Assets
+
+- Running the menu command in the Unity Editor creates or overwrites: `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity`.
+
+### Manual Test Steps
+
+1. Open Unity and allow scripts to compile.
+2. Confirm there are no compile errors in the Console.
+3. Run `ADITD/Setup/Recreate Wave 011B Minimal Hearth Return`.
+4. Open `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity`.
+5. Enter Play Mode.
+6. Approach the Green Thermos from the front/normal room path.
+7. Confirm `E - Claim Thermos` appears without rotating to the backside or aiming with pixel precision.
+8. Press `E` once and confirm the thermos is claimed.
+9. Approach the highlighted shelf slot normally.
+10. Confirm `E - Place Anchor` appears without precise pixel aiming.
+11. Press `E` once and confirm the thermos is placed.
+12. Confirm the fire brightens one notch and the confirmation line appears once.
+13. Try interacting again and confirm the thermos cannot be duplicated.
+
+### Known Limitations
+
+- This fix applies when the Wave 011B scene is recreated through the setup menu so the corrected root colliders are regenerated.
+- Fix-pass only; no redesign of `PlayerInteractor` or broader interaction architecture.
+- Graybox-only implementation still uses primitive geometry and `OnGUI` overlay feedback.
+- No persistence, inventory, carrying visuals, second slot, or broader Hearth progression were added.
+
+### Rollback Notes
+
+- Revert `Assets/_Project/Code/Editor/Wave011BMinimalHearthReturnSetup.cs`.
+- Recreate or remove `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity` if you want to remove the corrected widened colliders from the generated scene.
+- Remove the Wave 011B-FixPass2 entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 011B-FixPass: Hearth Return Interaction Affordance Fixes
+
+### Summary
+
+Improved the Wave 011B graybox interaction affordances so the Green Thermos pickup and Hearth shelf placement prompt appear reliably without pixel-precise aiming, while preserving the same local puzzle flow, prompts, and no-duplication behavior.
+
+### Files Changed
+
+- `Assets/_Project/Code/Editor/Wave011BMinimalHearthReturnSetup.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Updated `Wave011BMinimalHearthReturnSetup` to generate a larger invisible `PickupInteractionVolume` child `BoxCollider` on the Green Thermos so the player can look generally at the thermos/table area and still hit the interactable through the existing parent lookup path.
+- Updated the same setup tool to generate a larger invisible `PlacementInteractionVolume` child `BoxCollider` on the Hearth shelf slot so `E - Place Anchor` appears reliably when the player is looking generally at the highlighted placement area.
+- Kept `PlayerInteractor`, prompts, room-local carry/placed booleans, and the existing thermos duplication guard unchanged to avoid widening scope or redesigning interaction behavior.
+
+### Menu Path
+
+- `ADITD/Setup/Recreate Wave 011B Minimal Hearth Return`
+
+### Created or Updated Assets
+
+- Running the menu command in the Unity Editor creates or overwrites: `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity`.
+
+### Manual Test Steps
+
+1. Open Unity and allow scripts to compile.
+2. Confirm there are no compile errors in the Console.
+3. Run `ADITD/Setup/Recreate Wave 011B Minimal Hearth Return`.
+4. Open `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity`.
+5. Enter Play Mode.
+6. Approach the Green Thermos normally.
+7. Confirm `E - Claim Thermos` appears without precise pixel aiming.
+8. Press `E` once and confirm the thermos is claimed.
+9. Approach the highlighted shelf slot normally.
+10. Confirm `E - Place Anchor` appears without precise pixel aiming.
+11. Press `E` once and confirm the thermos is placed.
+12. Confirm the fire brightens one notch and the confirmation line appears once.
+13. Try interacting again and confirm the thermos cannot be duplicated.
+
+### Known Limitations
+
+- Fix-pass only; no redesign of `PlayerInteractor` or broader interaction architecture.
+- The improved affordance depends on recreating the Wave 011B graybox scene through the existing setup menu so the new invisible interaction volumes are generated.
+- Graybox-only implementation still uses primitive geometry and `OnGUI` overlay feedback.
+- No persistence, inventory, carrying visuals, second slot, or broader Hearth progression were added.
+
+### Rollback Notes
+
+- Revert `Assets/_Project/Code/Editor/Wave011BMinimalHearthReturnSetup.cs`.
+- Recreate or remove `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity` if you want to remove the widened interaction volumes from the generated scene.
+- Remove the Wave 011B-FixPass entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 011B: Green Thermos Pickup + Minimal Hearth Return Implementation
+
+### Summary
+
+Implemented the smallest playable Hearth return graybox loop: claim the Green Thermos with `E`, carry it through room-local boolean state only, place it on one highlighted shelf slot with `E`, show the thermos on the shelf, brighten the fire one notch, and surface the single approved confirmation line.
+
+### Files Changed
+
+- `Assets/_Project/Code/Hearth/HearthMinimalReturnController.cs`
+- `Assets/_Project/Code/Hearth/GreenThermosReturnInteractable.cs`
+- `Assets/_Project/Code/Hearth/HearthAnchorPlacementSlot.cs`
+- `Assets/_Project/Code/Editor/Wave011BMinimalHearthReturnSetup.cs`
+- `Assets/_Project/Code/Interaction/IInteractionPromptProvider.cs`
+- `Assets/_Project/Code/Player/PlayerInteractor.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Added `HearthMinimalReturnController` as a scene-local graybox controller for `room.hearth.minimal_return`, containing only the allowed local gate/carry/placed booleans plus fire, carried-status, and confirmation-line feedback.
+- Added `GreenThermosReturnInteractable` for claiming the thermos and `HearthAnchorPlacementSlot` for the single valid placement shelf slot, both using the existing `IInteractable` flow and rejecting unavailable states cleanly.
+- Added a minimal generic `IInteractionPromptProvider` contract and updated `PlayerInteractor` to use it so prompt text can read `E - Claim Thermos` and `E - Place Anchor` without adding puzzle logic to the player controller.
+- Added `Wave011BMinimalHearthReturnSetup` to create or recreate a contained Hearth graybox test scene with one pickup thermos, one shelf slot, one placed thermos mesh, one fire light, and the new components wired through serialized references.
+
+### Menu Path
+
+- `ADITD/Setup/Recreate Wave 011B Minimal Hearth Return`
+
+### Created or Updated Assets
+
+- Running the menu command in the Unity Editor creates or overwrites: `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity`.
+
+### Manual Test Steps
+
+1. Open Unity and allow scripts to compile.
+2. Confirm there are no compile errors in the Console.
+3. Run `ADITD/Setup/Recreate Wave 011B Minimal Hearth Return`.
+4. Open `Wave011B_HearthMinimalReturn` and enter Play Mode.
+5. Approach the Green Thermos and confirm the prompt reads `E - Claim Thermos`.
+6. Press `E` and confirm `Carrying: Green Thermos` appears.
+7. Confirm exactly one Hearth shelf slot becomes visibly highlighted.
+8. Approach the slot and confirm the prompt reads `E - Place Anchor`.
+9. Press `E` and confirm the thermos appears on the shelf.
+10. Confirm the shelf highlight disappears and `Carrying: Green Thermos` no longer appears.
+11. Confirm the Hearth fire brightens one notch.
+12. Confirm the line appears: `An ordinary capacity to endure, held in place.`
+13. Try interacting again and confirm the thermos cannot be duplicated.
+
+### Known Limitations
+
+- Graybox-only implementation using primitive geometry and `OnGUI` overlay feedback.
+- No persistence, inventory, carrying visuals, second slot, or broader Hearth progression.
+- `weightOfDoorCompleted` is a local serialized gate defaulted on for the recreated graybox scene; no cross-scene completion handoff exists in this wave.
+- The new scene is generated through the editor recreate command rather than hand-authored runtime scene infrastructure.
+
+### Rollback Notes
+
+- Delete or revert `Assets/_Project/Code/Hearth/HearthMinimalReturnController.cs`.
+- Delete or revert `Assets/_Project/Code/Hearth/GreenThermosReturnInteractable.cs`.
+- Delete or revert `Assets/_Project/Code/Hearth/HearthAnchorPlacementSlot.cs`.
+- Delete or revert `Assets/_Project/Code/Editor/Wave011BMinimalHearthReturnSetup.cs`.
+- Delete or revert `Assets/_Project/Code/Interaction/IInteractionPromptProvider.cs`.
+- Revert `Assets/_Project/Code/Player/PlayerInteractor.cs`.
+- Delete generated scene `Assets/_Project/Scenes/Wave011B_HearthMinimalReturn.unity` if present.
+- Remove the Wave 011B entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-16 - Wave 011A: Green Thermos Pickup + Minimal Hearth Return Spec
+
+### Summary
+
+Added two implementation-ready docs that define the smallest approved post-`Weight of the Door` return loop: claim the Green Thermos with `E`, carry it through local boolean state only, and place it on one highlighted Hearth shelf slot for a single calm confirmation beat.
+
+### Files Changed
+
+- `Docs/ROOM_SPECS/Hearth_MinimalReturn.md`
+- `Docs/PUZZLE_SPECS/GreenThermos_Return.md`
+- `Docs/BUILD_LOG.md`
+
+### What Was Updated
+
+- Added `Docs/ROOM_SPECS/Hearth_MinimalReturn.md` as the minimal graybox room/container spec for the first Hearth return interaction.
+- Added `Docs/PUZZLE_SPECS/GreenThermos_Return.md` as the matching puzzle spec for claim-state, placement-state, prompts, tone constraints, and local-boolean-only requirements.
+- Kept scope strictly docs-only with no runtime implementation, no inventory expansion, no save/load, no broader Hearth architecture, and no agent handoff report.
+
+### Manual Validation Steps
+
+1. Open `Docs/ROOM_SPECS/Hearth_MinimalReturn.md`.
+2. Confirm the room stable ID is `room.hearth.minimal_return` and the status is `Ready for implementation`.
+3. Confirm the room spec defines exactly one highlighted shelf slot, one fire-brightening notch, and one quiet confirmation line.
+4. Open `Docs/PUZZLE_SPECS/GreenThermos_Return.md`.
+5. Confirm the puzzle spec uses local boolean carried/placed state only and explicitly rejects inventory UI, save/load, carrying visuals, and global systems.
+6. Confirm both specs keep the Green Thermos tone quiet, contradictory, and dignified, and frame the Hearth return as grounding rather than trophy display.
+7. Confirm no runtime code, Unity scenes, prefabs, materials, Input Actions, or project settings were changed.
+
+### Known Limitations
+
+- Docs-only wave.
+- No gameplay implementation.
+- No full Hearth system or progression model.
+- No inventory, save/load, or persistence behavior.
+- No placement visuals beyond the implementation notes and placeholder prompts described in the specs.
+
+### Rollback Notes
+
+- Delete `Docs/ROOM_SPECS/Hearth_MinimalReturn.md`.
+- Delete `Docs/PUZZLE_SPECS/GreenThermos_Return.md`.
+- Remove the Wave 011A entry from the top of `Docs/BUILD_LOG.md`.
+
 ## 2026-05-16 - Wave 010D: Weight of the Door Archive + Checklist Sync
 
 ### Summary
