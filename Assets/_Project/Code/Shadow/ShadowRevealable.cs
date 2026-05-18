@@ -1,10 +1,11 @@
+using ADoorInsideTheDark.Rooms;
 using UnityEngine;
 
 namespace ADoorInsideTheDark.Shadow
 {
     public sealed class ShadowRevealable : MonoBehaviour, IShadowRevealable
     {
-        [SerializeField] private ShadowPerceptionController _controller;
+        [SerializeField] private MonoBehaviour _perceptionSource;
         [SerializeField] private GameObject[] _objectsToToggle;
         [SerializeField] private Renderer[] _renderersToToggleVisibility;
         [SerializeField] private Renderer[] _renderersToTint;
@@ -24,6 +25,8 @@ namespace ADoorInsideTheDark.Shadow
         private bool _isCurrentlyRevealed;
         private AudioClip _generatedRevealLoopClip;
 
+        private IShadowPerceptionSource PerceptionSource => _perceptionSource as IShadowPerceptionSource;
+
         private void Awake()
         {
             AutoAssignController(logWarningIfMissing: true);
@@ -36,7 +39,13 @@ namespace ADoorInsideTheDark.Shadow
         {
             AutoAssignController(logWarningIfMissing: true);
             AutoAssignRevealAudioSource();
-            _controller?.RegisterRevealable(this);
+
+            if (PerceptionSource != null)
+            {
+                PerceptionSource.PerceptionStateChanged += SetShadowPerceptionActive;
+                SetShadowPerceptionActive(PerceptionSource.IsPerceptionActive);
+            }
+
             RefreshVisualState();
         }
 
@@ -47,7 +56,11 @@ namespace ADoorInsideTheDark.Shadow
 
         private void OnDisable()
         {
-            _controller?.UnregisterRevealable(this);
+            if (PerceptionSource != null)
+            {
+                PerceptionSource.PerceptionStateChanged -= SetShadowPerceptionActive;
+            }
+
             StopRevealAudioImmediately();
         }
 
@@ -101,13 +114,24 @@ namespace ADoorInsideTheDark.Shadow
 
         private void AutoAssignController(bool logWarningIfMissing)
         {
-            if (_controller == null)
+            if (_perceptionSource != null && PerceptionSource != null)
             {
-                _controller = FindAnyObjectByType<ShadowPerceptionController>();
+                _hasLoggedMissingControllerWarning = false;
+                return;
             }
 
-            if (_controller != null)
+            LocalViewportHandoff handoff = FindAnyObjectByType<LocalViewportHandoff>();
+            if (handoff != null)
             {
+                _perceptionSource = handoff;
+                _hasLoggedMissingControllerWarning = false;
+                return;
+            }
+
+            ShadowPerceptionController holdController = FindAnyObjectByType<ShadowPerceptionController>();
+            if (holdController != null)
+            {
+                _perceptionSource = holdController;
                 _hasLoggedMissingControllerWarning = false;
                 return;
             }
@@ -118,7 +142,7 @@ namespace ADoorInsideTheDark.Shadow
             }
 
             Debug.LogWarning(
-                $"[ShadowRevealable] '{name}' could not find a ShadowPerceptionController through the inspector or FindAnyObjectByType fallback. It will not receive Shadow perception state changes until one is assigned.",
+                $"[ShadowRevealable] '{name}' could not find an {nameof(IShadowPerceptionSource)} through the inspector or scene fallback. It will not receive Shadow perception state changes until one is assigned.",
                 this);
             _hasLoggedMissingControllerWarning = true;
         }

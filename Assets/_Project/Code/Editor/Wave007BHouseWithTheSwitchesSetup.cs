@@ -4,6 +4,7 @@ using ADoorInsideTheDark.Shadow;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 
@@ -14,6 +15,10 @@ namespace ADoorInsideTheDark.Editor
         private const string MenuPath = "ADITD/Setup/Recreate Wave 007B House With the Switches";
         private const string ScenePath = "Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity";
         private const string PlayerPrefabPath = "Assets/_Project/Prefabs/Player/Player.prefab";
+        private const string ControlsAssetPath = "Assets/_Project/Settings/InputActions/Resources/ADITDControls.inputactions";
+
+        private static readonly Color EgoProxyColor = new(0.86f, 0.63f, 0.34f, 1f);
+        private static readonly Color ShadowProxyColor = new(0.18f, 0.21f, 0.25f, 1f);
 
         [MenuItem(MenuPath)]
         public static void CreateOrRecreateScene()
@@ -31,15 +36,16 @@ namespace ADoorInsideTheDark.Editor
 
             ConfigureSceneLighting(scene);
             GameObject player = BuildPlayer(scene);
-            ShadowPerceptionController shadowPerception = AddOrGetShadowPerceptionController(player);
-            BuildRoom(roomRoot.transform, shadowPerception, out HouseWithTheSwitchesController controller);
+            DisableShadowPerceptionController(player);
+            BuildRoom(roomRoot.transform, out HouseWithTheSwitchesController controller, out LocalViewportHandoff handoff);
+            WireHandoff(handoff);
             ConfigureController(controller);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
 
             Debug.Log(
-                $"[Wave007B Setup] Created or recreated '{ScenePath}'. This setup rebuilds the dedicated Wave 007B graybox scene from scratch.",
+                $"[Wave007B Setup] Created or recreated '{ScenePath}'. Split-self viewport handoff integrated with the Wave 007B puzzle graybox.",
                 roomRoot);
         }
 
@@ -60,8 +66,8 @@ namespace ADoorInsideTheDark.Editor
 
         private static void BuildRoom(
             Transform parent,
-            ShadowPerceptionController shadowPerception,
-            out HouseWithTheSwitchesController controller)
+            out HouseWithTheSwitchesController controller,
+            out LocalViewportHandoff handoff)
         {
             GameObject floor = CreatePrimitive(parent, "Floor", PrimitiveType.Cube, new Vector3(0f, 0f, 0f), new Vector3(7.5f, 0.25f, 7.5f));
             GameObject ceiling = CreatePrimitive(parent, "Ceiling", PrimitiveType.Cube, new Vector3(0f, 3f, 0f), new Vector3(7.5f, 0.25f, 7.5f));
@@ -113,8 +119,65 @@ namespace ADoorInsideTheDark.Editor
             overheadLight.range = 12f;
             overheadLight.shadows = LightShadows.Soft;
 
-            controller = AddOrGetController(parent.gameObject);
+            GameObject shadowAnchor = new("ShadowAnchor");
+            shadowAnchor.transform.SetParent(parent, false);
+            shadowAnchor.transform.localPosition = new Vector3(0f, 0.2f, 2.0f);
+            shadowAnchor.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
 
+            GameObject egoProxy = CreateProxy(parent, "EgoProxy", EgoProxyColor, new Vector3(0f, 1f, -2.6f));
+            egoProxy.SetActive(false);
+
+            GameObject shadowProxy = CreateProxy(parent, "ShadowProxy", ShadowProxyColor, new Vector3(0f, 0.2f, 2.0f));
+
+            handoff = AddOrGetHandoff(parent.gameObject);
+            controller = AddOrGetController(parent.gameObject);
+            WireControllerAndConsumers(
+                controller,
+                handoff,
+                interactable,
+                overheadLight,
+                switchHandle,
+                seamRoot,
+                seamRevealable,
+                completionMarker,
+                roomClarityAudioSource,
+                floor,
+                ceiling,
+                backWall,
+                frontWall,
+                leftWall,
+                rightWall,
+                safePocket,
+                switchPlate,
+                seamRevealAudioSource,
+                egoProxy,
+                shadowProxy,
+                shadowAnchor);
+        }
+
+        private static void WireControllerAndConsumers(
+            HouseWithTheSwitchesController controller,
+            LocalViewportHandoff handoff,
+            HouseSwitchInteractable interactable,
+            Light overheadLight,
+            GameObject switchHandle,
+            GameObject seamRoot,
+            ShadowRevealable seamRevealable,
+            GameObject completionMarker,
+            AudioSource roomClarityAudioSource,
+            GameObject floor,
+            GameObject ceiling,
+            GameObject backWall,
+            GameObject frontWall,
+            GameObject leftWall,
+            GameObject rightWall,
+            GameObject safePocket,
+            GameObject switchPlate,
+            AudioSource seamRevealAudioSource,
+            GameObject egoProxy,
+            GameObject shadowProxy,
+            GameObject shadowAnchor)
+        {
             SerializedObject interactableSo = new(interactable);
             interactableSo.FindProperty("_controller").objectReferenceValue = controller;
             interactableSo.ApplyModifiedPropertiesWithoutUndo();
@@ -126,7 +189,7 @@ namespace ADoorInsideTheDark.Editor
             controllerSo.FindProperty("_hiddenSeamRoot").objectReferenceValue = seamRoot;
             controllerSo.FindProperty("_hiddenSeamRevealable").objectReferenceValue = seamRevealable;
             controllerSo.FindProperty("_completionMarker").objectReferenceValue = completionMarker;
-            controllerSo.FindProperty("_shadowPerception").objectReferenceValue = shadowPerception;
+            controllerSo.FindProperty("_perceptionSource").objectReferenceValue = handoff;
             controllerSo.FindProperty("_clarityAudioSource").objectReferenceValue = roomClarityAudioSource;
             SetObjectArray(
                 controllerSo.FindProperty("_roomRenderers"),
@@ -147,7 +210,7 @@ namespace ADoorInsideTheDark.Editor
             controllerSo.ApplyModifiedPropertiesWithoutUndo();
 
             SerializedObject seamRevealableSo = new(seamRevealable);
-            seamRevealableSo.FindProperty("_controller").objectReferenceValue = shadowPerception;
+            seamRevealableSo.FindProperty("_perceptionSource").objectReferenceValue = handoff;
             SetObjectArray(
                 seamRevealableSo.FindProperty("_objectsToToggle"),
                 System.Array.Empty<Object>());
@@ -159,6 +222,48 @@ namespace ADoorInsideTheDark.Editor
                 System.Array.Empty<Object>());
             seamRevealableSo.FindProperty("_revealAudioSource").objectReferenceValue = seamRevealAudioSource;
             seamRevealableSo.ApplyModifiedPropertiesWithoutUndo();
+
+            SerializedObject handoffSo = new(handoff);
+            handoffSo.FindProperty("_egoProxyRoot").objectReferenceValue = egoProxy;
+            handoffSo.FindProperty("_shadowProxyRoot").objectReferenceValue = shadowProxy;
+            handoffSo.FindProperty("_initialShadowAnchor").objectReferenceValue = shadowAnchor.transform;
+            handoffSo.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void WireHandoff(LocalViewportHandoff handoff)
+        {
+            if (handoff == null)
+            {
+                return;
+            }
+
+            AudioSource fractureAudioSource = handoff.GetComponent<AudioSource>();
+            if (fractureAudioSource == null)
+            {
+                fractureAudioSource = handoff.gameObject.AddComponent<AudioSource>();
+            }
+
+            ConfigureFractureAudioSource(fractureAudioSource);
+
+            InputActionAsset controls = AssetDatabase.LoadAssetAtPath<InputActionAsset>(ControlsAssetPath);
+            AudioClip fractureCue = ShadowAudioClipFactory.CreateDestabilizedGuidanceCue();
+
+            SerializedObject handoffSo = new(handoff);
+            handoffSo.FindProperty("_controls").objectReferenceValue = controls;
+            handoffSo.FindProperty("_fractureAudioSource").objectReferenceValue = fractureAudioSource;
+            handoffSo.FindProperty("_fractureCue").objectReferenceValue = fractureCue;
+            handoffSo.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static LocalViewportHandoff AddOrGetHandoff(GameObject roomRoot)
+        {
+            LocalViewportHandoff handoff = roomRoot.GetComponent<LocalViewportHandoff>();
+            if (handoff == null)
+            {
+                handoff = roomRoot.AddComponent<LocalViewportHandoff>();
+            }
+
+            return handoff;
         }
 
         private static HouseWithTheSwitchesController AddOrGetController(GameObject roomRoot)
@@ -194,27 +299,18 @@ namespace ADoorInsideTheDark.Editor
             return playerInstance;
         }
 
-        private static ShadowPerceptionController AddOrGetShadowPerceptionController(GameObject player)
+        private static void DisableShadowPerceptionController(GameObject player)
         {
             if (player == null)
             {
-                return null;
+                return;
             }
 
-            ShadowPerceptionController controller = player.GetComponent<ShadowPerceptionController>();
-            if (controller == null)
+            ShadowPerceptionController shadowPerception = player.GetComponent<ShadowPerceptionController>();
+            if (shadowPerception != null)
             {
-                controller = player.AddComponent<ShadowPerceptionController>();
+                shadowPerception.enabled = false;
             }
-
-            AudioSource perceptionAudioSource = player.AddComponent<AudioSource>();
-            ConfigurePerceptionAudioSource(perceptionAudioSource);
-
-            SerializedObject controllerSo = new(controller);
-            controllerSo.FindProperty("_perceptionAudioSource").objectReferenceValue = perceptionAudioSource;
-            controllerSo.ApplyModifiedPropertiesWithoutUndo();
-
-            return controller;
         }
 
         private static void ConfigureController(HouseWithTheSwitchesController controller)
@@ -226,8 +322,17 @@ namespace ADoorInsideTheDark.Editor
 
             SerializedObject controllerSo = new(controller);
             controllerSo.FindProperty("_showDebugOverlay").boolValue = true;
-            controllerSo.FindProperty("_shadowPerceptionControlLabel").stringValue = "Hold Q to let Shadow show the hidden seam";
+            controllerSo.FindProperty("_shadowPerceptionControlLabel").stringValue =
+                "Press Q to swap into Shadow and watch the back wall";
             controllerSo.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static GameObject CreateProxy(Transform parent, string name, Color color, Vector3 localPosition)
+        {
+            GameObject proxy = CreatePrimitive(parent, name, PrimitiveType.Capsule, localPosition, new Vector3(0.55f, 0.9f, 0.55f));
+            SetRendererColor(proxy, color);
+            proxy.GetComponent<Collider>().enabled = false;
+            return proxy;
         }
 
         private static GameObject CreatePrimitive(
@@ -243,6 +348,19 @@ namespace ADoorInsideTheDark.Editor
             go.transform.localPosition = localPosition;
             go.transform.localScale = localScale;
             return go;
+        }
+
+        private static void SetRendererColor(GameObject target, Color color)
+        {
+            Renderer renderer = target.GetComponent<Renderer>();
+            if (renderer == null)
+            {
+                return;
+            }
+
+            Material material = new Material(renderer.sharedMaterial);
+            material.color = color;
+            renderer.sharedMaterial = material;
         }
 
         private static void SetCollidersEnabled(GameObject root, bool enabled)
@@ -267,19 +385,6 @@ namespace ADoorInsideTheDark.Editor
             }
         }
 
-        private static void ConfigurePerceptionAudioSource(AudioSource audioSource)
-        {
-            if (audioSource == null)
-            {
-                return;
-            }
-
-            audioSource.playOnAwake = false;
-            audioSource.loop = false;
-            audioSource.spatialBlend = 0f;
-            audioSource.volume = 1f;
-        }
-
         private static void ConfigureRevealAudioSource(AudioSource audioSource)
         {
             if (audioSource == null)
@@ -294,6 +399,19 @@ namespace ADoorInsideTheDark.Editor
         }
 
         private static void ConfigureClarityAudioSource(AudioSource audioSource)
+        {
+            if (audioSource == null)
+            {
+                return;
+            }
+
+            audioSource.playOnAwake = false;
+            audioSource.loop = false;
+            audioSource.spatialBlend = 0f;
+            audioSource.volume = 1f;
+        }
+
+        private static void ConfigureFractureAudioSource(AudioSource audioSource)
         {
             if (audioSource == null)
             {

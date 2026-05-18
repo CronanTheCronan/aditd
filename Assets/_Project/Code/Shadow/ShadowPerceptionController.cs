@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using ADoorInsideTheDark.Player;
 
 namespace ADoorInsideTheDark.Shadow
 {
-    public sealed class ShadowPerceptionController : MonoBehaviour
+    public sealed class ShadowPerceptionController : MonoBehaviour, IShadowPerceptionSource
     {
         [Header("Wave 009A Input")]
         [SerializeField] private InputActionAsset _controls;
@@ -21,7 +20,6 @@ namespace ADoorInsideTheDark.Shadow
         [SerializeField] private float _activationCueVolume = 0.16f;
         [SerializeField] private float _deactivationCueVolume = 0.12f;
 
-        private readonly List<IShadowRevealable> _registeredRevealables = new();
         private InputAction _shadowPerceptionAction;
         private AudioClip _generatedActivationCue;
         private AudioClip _generatedDeactivationCue;
@@ -84,36 +82,9 @@ namespace ADoorInsideTheDark.Shadow
             AutoAssignAudioSource();
         }
 
-        public void RegisterRevealable(IShadowRevealable revealable)
-        {
-            if (revealable == null || _registeredRevealables.Contains(revealable))
-            {
-                return;
-            }
-
-            _registeredRevealables.Add(revealable);
-            revealable.SetShadowPerceptionActive(IsPerceptionActive);
-        }
-
-        public void UnregisterRevealable(IShadowRevealable revealable)
-        {
-            if (revealable == null)
-            {
-                return;
-            }
-
-            _registeredRevealables.Remove(revealable);
-        }
-
         private void SetPerceptionActive(bool isActive)
         {
             IsPerceptionActive = isActive;
-
-            for (int i = 0; i < _registeredRevealables.Count; i++)
-            {
-                _registeredRevealables[i]?.SetShadowPerceptionActive(isActive);
-            }
-
             PlayPerceptionCue(isActive);
             PerceptionStateChanged?.Invoke(isActive);
         }

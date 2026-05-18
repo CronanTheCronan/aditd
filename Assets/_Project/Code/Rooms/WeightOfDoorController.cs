@@ -30,7 +30,7 @@ namespace ADoorInsideTheDark.Rooms
         [SerializeField] private Transform _doorPanelTransform;
         [SerializeField] private GameObject _bindingsRoot;
         [SerializeField] private ShadowRevealable _bindingsRevealable;
-        [SerializeField] private ShadowPerceptionController _shadowPerception;
+        [SerializeField] private MonoBehaviour _perceptionSource;
         [SerializeField] private AudioSource _clarityAudioSource;
         [SerializeField] private Transform _thermosRoot;
         [SerializeField] private Vector3 _thermosCompletedLocalPosition = new(-1.15f, 0.06f, -3.45f);
@@ -61,6 +61,8 @@ namespace ADoorInsideTheDark.Rooms
         private GUIStyle _overlayStyle;
         private AudioClip _generatedWrongFormCue;
         private AudioClip _generatedBlockedCue;
+
+        private IShadowPerceptionSource PerceptionSource => _perceptionSource as IShadowPerceptionSource;
 
         public void UseDoor(PlayerContext context)
         {
@@ -116,18 +118,18 @@ namespace ADoorInsideTheDark.Rooms
 
         private void OnEnable()
         {
-            if (_shadowPerception != null)
+            if (PerceptionSource != null)
             {
-                _shadowPerception.PerceptionStateChanged += HandleShadowPerceptionChanged;
-                HandleShadowPerceptionChanged(_shadowPerception.IsPerceptionActive);
+                PerceptionSource.PerceptionStateChanged += HandleShadowPerceptionChanged;
+                HandleShadowPerceptionChanged(PerceptionSource.IsPerceptionActive);
             }
         }
 
         private void OnDisable()
         {
-            if (_shadowPerception != null)
+            if (PerceptionSource != null)
             {
-                _shadowPerception.PerceptionStateChanged -= HandleShadowPerceptionChanged;
+                PerceptionSource.PerceptionStateChanged -= HandleShadowPerceptionChanged;
             }
         }
 
@@ -211,10 +213,10 @@ namespace ADoorInsideTheDark.Rooms
                     this);
             }
 
-            if (_shadowPerception == null)
+            if (_perceptionSource == null)
             {
                 Debug.LogWarning(
-                    $"{nameof(WeightOfDoorController)} on '{gameObject.name}' should assign {nameof(_shadowPerception)}.",
+                    $"{nameof(WeightOfDoorController)} on '{gameObject.name}' should assign {nameof(_perceptionSource)}.",
                     this);
             }
         }
@@ -226,9 +228,21 @@ namespace ADoorInsideTheDark.Rooms
                 _bindingsRevealable = _bindingsRoot.GetComponent<ShadowRevealable>();
             }
 
-            if (_shadowPerception == null)
+            if (_perceptionSource == null)
             {
-                _shadowPerception = FindAnyObjectByType<ShadowPerceptionController>();
+                LocalViewportHandoff handoff = FindAnyObjectByType<LocalViewportHandoff>();
+                if (handoff != null)
+                {
+                    _perceptionSource = handoff;
+                }
+                else
+                {
+                    ShadowPerceptionController controller = FindAnyObjectByType<ShadowPerceptionController>();
+                    if (controller != null)
+                    {
+                        _perceptionSource = controller;
+                    }
+                }
             }
         }
 
@@ -495,7 +509,7 @@ namespace ADoorInsideTheDark.Rooms
 
         private bool IsShadowPerceptionActive()
         {
-            return _shadowPerception != null && _shadowPerception.IsPerceptionActive;
+            return PerceptionSource != null && PerceptionSource.IsPerceptionActive;
         }
 
         private void PlayWrongFormCue()

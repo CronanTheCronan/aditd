@@ -24,14 +24,14 @@ namespace ADoorInsideTheDark.Rooms
         [SerializeField] private Renderer[] _hiddenSeamRenderers;
         [SerializeField] private GameObject _completionMarker;
         [SerializeField] private Renderer[] _completionRenderers;
-        [SerializeField] private ShadowPerceptionController _shadowPerception;
+        [SerializeField] private MonoBehaviour _perceptionSource;
         [SerializeField] private AudioSource _clarityAudioSource;
 
         [Header("Feedback")]
         [SerializeField] private bool _showDebugOverlay = true;
         [SerializeField] private float _wrongFormFeedbackDuration = 1.35f;
         [SerializeField] private float _switchHandlePressedAngle = 26f;
-        [SerializeField] private string _shadowPerceptionControlLabel = "Hold Q to enter Shadow perception";
+        [SerializeField] private string _shadowPerceptionControlLabel = "Press Q to swap into Shadow";
         [SerializeField] private AudioClip _shadowBlockedCue;
         [SerializeField] private AudioClip _destabilizedGuidanceCue;
         [SerializeField] private float _shadowBlockedCueVolume = 0.12f;
@@ -58,6 +58,8 @@ namespace ADoorInsideTheDark.Rooms
         private GUIStyle _overlayStyle;
         private AudioClip _generatedBlockedCue;
         private AudioClip _generatedDestabilizedGuidanceCue;
+
+        private IShadowPerceptionSource PerceptionSource => _perceptionSource as IShadowPerceptionSource;
 
         public void UseOrdinarySwitch(PlayerContext context)
         {
@@ -101,18 +103,18 @@ namespace ADoorInsideTheDark.Rooms
 
         private void OnEnable()
         {
-            if (_shadowPerception != null)
+            if (PerceptionSource != null)
             {
-                _shadowPerception.PerceptionStateChanged += HandleShadowPerceptionChanged;
-                HandleShadowPerceptionChanged(_shadowPerception.IsPerceptionActive);
+                PerceptionSource.PerceptionStateChanged += HandleShadowPerceptionChanged;
+                HandleShadowPerceptionChanged(PerceptionSource.IsPerceptionActive);
             }
         }
 
         private void OnDisable()
         {
-            if (_shadowPerception != null)
+            if (PerceptionSource != null)
             {
-                _shadowPerception.PerceptionStateChanged -= HandleShadowPerceptionChanged;
+                PerceptionSource.PerceptionStateChanged -= HandleShadowPerceptionChanged;
             }
         }
 
@@ -173,7 +175,7 @@ namespace ADoorInsideTheDark.Rooms
                         ? "Something loosened in the room. " + _shadowPerceptionControlLabel + " and watch the back wall."
                         : "The glare fights you back. " + _shadowPerceptionControlLabel + " and look for the hidden seam.",
                 RoomState.ShadowRevealed =>
-                    "The seam is visible. Keep Shadow perception active and press E on the switch to settle the room.",
+                    "The seam is visible. Press E on the switch from Shadow view to settle the room.",
                 RoomState.Completed =>
                     "The room holds together. The light is stable and the way forward is open.",
                 _ => string.Empty
@@ -185,6 +187,11 @@ namespace ADoorInsideTheDark.Rooms
 
         private void OnValidate()
         {
+            if (SuppressEditorSetupValidation)
+            {
+                return;
+            }
+
             if (_overheadLight == null)
             {
                 Debug.LogWarning(
@@ -227,13 +234,15 @@ namespace ADoorInsideTheDark.Rooms
                     this);
             }
 
-            if (_shadowPerception == null)
+            if (_perceptionSource == null)
             {
                 Debug.LogWarning(
-                    $"{nameof(HouseWithTheSwitchesController)} on '{gameObject.name}' should assign {nameof(_shadowPerception)}.",
+                    $"{nameof(HouseWithTheSwitchesController)} on '{gameObject.name}' should assign {nameof(_perceptionSource)}.",
                     this);
             }
         }
+
+        internal static bool SuppressEditorSetupValidation { get; set; }
 
         private void AutoAssignDependencies()
         {
@@ -242,9 +251,20 @@ namespace ADoorInsideTheDark.Rooms
                 _hiddenSeamRevealable = _hiddenSeamRoot.GetComponent<ShadowRevealable>();
             }
 
-            if (_shadowPerception == null)
+            if (_perceptionSource == null || PerceptionSource == null)
             {
-                _shadowPerception = FindAnyObjectByType<ShadowPerceptionController>();
+                LocalViewportHandoff handoff = FindAnyObjectByType<LocalViewportHandoff>();
+                if (handoff != null)
+                {
+                    _perceptionSource = handoff;
+                    return;
+                }
+
+                ShadowPerceptionController holdController = FindAnyObjectByType<ShadowPerceptionController>();
+                if (holdController != null)
+                {
+                    _perceptionSource = holdController;
+                }
             }
         }
 
@@ -453,7 +473,7 @@ namespace ADoorInsideTheDark.Rooms
 
         private bool IsShadowPerceptionActive()
         {
-            return _shadowPerception != null && _shadowPerception.IsPerceptionActive;
+            return PerceptionSource != null && PerceptionSource.IsPerceptionActive;
         }
 
         private static void ApplyPalette(Renderer[] renderers, Color color)

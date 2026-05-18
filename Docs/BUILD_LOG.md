@@ -1,5 +1,94 @@
 # Build Log
 
+## 2026-05-17 - Wave 014C: Viewport Handoff Cleanup & 010B Regression Fix
+
+### Summary
+
+Fixed a Wave 010B regression introduced by the Wave 014B interface extraction (stale `_shadowPerception` / `_controller` property names). Improved `LocalViewportHandoff` perception timing so Shadow reveal fires at Q-press rather than after the 0.2s fracture delay. Added an `OnDisable` safety fallback to prevent permanent input locks when a scene is unloaded or Play Mode is stopped mid-transition.
+
+### Files Changed
+
+- `Assets/_Project/Code/Rooms/WeightOfDoorController.cs`
+- `Assets/_Project/Code/Editor/Wave010BWeightOfDoorSetup.cs`
+- `Assets/_Project/Code/Rooms/LocalViewportHandoff.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- `WeightOfDoorController`: replaced `[SerializeField] private ShadowPerceptionController _shadowPerception` with `[SerializeField] private MonoBehaviour _perceptionSource`; added `private IShadowPerceptionSource PerceptionSource` helper property; `OnEnable`/`OnDisable` subscribe/unsubscribe via the interface; `AutoAssignDependencies` prefers `LocalViewportHandoff` then falls back to `ShadowPerceptionController`; `IsShadowPerceptionActive` uses the interface; `OnValidate` warns on `_perceptionSource`.
+- `Wave010BWeightOfDoorSetup`: updated `FindProperty("_shadowPerception")` → `FindProperty("_perceptionSource")` on the controller `SerializedObject`; updated `FindProperty("_controller")` → `FindProperty("_perceptionSource")` on the `ShadowRevealable` `SerializedObject`.
+- `LocalViewportHandoff`: `PerceptionStateChanged?.Invoke(true)` fires at the start of `BeginTransitionToShadow` (Q-press), not in `CompleteTransitionAfterDelay`; `PerceptionStateChanged?.Invoke(false)` fires at the start of `BeginTransitionToEgo`; `IsPerceptionActive` returns `true` during both `ShadowActive` and `TransitioningToShadow` for consistent polling; `OnDisable` re-enables `PlayerController` and `CharacterController` if they were left disabled by a mid-transition interrupt.
+
+### Manual Test Steps
+
+1. Open Unity and let scripts compile (no errors expected).
+2. Run `ADITD/Setup/Recreate Wave 010B Weight of the Door`. Confirm no `SerializedProperty null reference` errors in the console.
+3. Open `Wave010B_WeightOfTheDoor.unity` and enter Play Mode. Confirm Shadow perception (Q) works with the bindings reveal.
+4. Open `Wave007B_HouseWithTheSwitches.unity` and enter Play Mode. Press **Q** — confirm the hidden seam renderers begin revealing at the moment Q is pressed, not 0.2s later.
+5. Press **Q** to return to ego — confirm the reveal hides immediately at Q-press.
+6. Stop Play Mode while mid-transition (Q held / pressing Q during the fracture delay): confirm the player can move normally after re-entering Play Mode (no frozen controller).
+
+### Known Limitations
+
+- Existing saved `Wave010B` scenes will lose the `_shadowPerception` assignment on the controller until the scene is regenerated via the setup menu (serialized field rename).
+- `IsPerceptionActive` is now `true` for the full `TransitioningToShadow` duration; code that polls the property (instead of subscribing to the event) will observe perception as active slightly longer than before.
+
+### Rollback Notes
+
+- Revert `WeightOfDoorController.cs`: restore `[SerializeField] private ShadowPerceptionController _shadowPerception` and direct field usage in `OnEnable`/`OnDisable`/`AutoAssignDependencies`/`IsShadowPerceptionActive`/`OnValidate`.
+- Revert `Wave010BWeightOfDoorSetup.cs`: restore `FindProperty("_shadowPerception")` and `FindProperty("_controller")`.
+- Revert `LocalViewportHandoff.cs`: move `PerceptionStateChanged?.Invoke` calls back into `CompleteTransitionAfterDelay`; restore `IsPerceptionActive => _state == HandoffState.ShadowActive`; remove safety-restore lines from `OnDisable`.
+- Remove this Wave 014C entry from the top of `Docs/BUILD_LOG.md`.
+
+## 2026-05-17 - Wave 014B: House With the Switches Split-Self Integration
+
+### Summary
+
+Decoupled shadow perception consumers behind `IShadowPerceptionSource` and integrated `LocalViewportHandoff` (toggle Q split-self) into the Wave 007B House With the Switches graybox, replacing hold-Q `ShadowPerceptionController` for the full puzzle loop.
+
+### Files Changed
+
+- `Assets/_Project/Code/Shadow/IShadowPerceptionSource.cs`
+- `Assets/_Project/Code/Shadow/ShadowPerceptionController.cs`
+- `Assets/_Project/Code/Shadow/ShadowRevealable.cs`
+- `Assets/_Project/Code/Rooms/LocalViewportHandoff.cs`
+- `Assets/_Project/Code/Rooms/HouseWithTheSwitchesController.cs`
+- `Assets/_Project/Code/Editor/Wave007BHouseWithTheSwitchesSetup.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Added `IShadowPerceptionSource` with `IsPerceptionActive` and `PerceptionStateChanged`.
+- `ShadowPerceptionController` implements the interface; removed manual revealable registration and per-revealable push loop.
+- `LocalViewportHandoff` implements the interface; fires perception events when entering `ShadowActive` / `EgoActive`.
+- `ShadowRevealable` and `HouseWithTheSwitchesController` subscribe via `MonoBehaviour _perceptionSource` cast to the interface; auto-assign prefers `LocalViewportHandoff` then `ShadowPerceptionController`.
+- Wave 007B editor setup disables player `ShadowPerceptionController`, creates ego/shadow proxies and `ShadowAnchor`, wires `LocalViewportHandoff` on the room root, and assigns handoff to puzzle consumers.
+
+### Manual Test Steps
+
+1. Open Unity and let scripts compile.
+2. Run menu `ADITD/Setup/Recreate Wave 007B House With the Switches`.
+3. Open `Assets/_Project/Scenes/Wave007B_HouseWithTheSwitches.unity` and enter Play Mode.
+4. Press **E** on the ordinary switch: room destabilizes (wrong-form feedback).
+5. Press **Q**: player teleports to the shadow anchor near the switch; amber ego proxy remains at the start position; hidden seam renderers reveal.
+6. Press **E** on the switch while in shadow view: room completes (stable light, completion marker).
+7. Press **Q** again to return to ego; confirm seam hides when room is not in destabilized/revealed states.
+8. Confirm player prefab `ShadowPerceptionController` is disabled in the generated scene (no hold-Q steal).
+
+### Known Limitations
+
+- Existing saved `Wave007B` scenes are not auto-migrated; rerun the setup menu to refresh wiring.
+- `ShadowPerceptionController` hold-Q scenes still work if wired explicitly to `_perceptionSource`.
+- Handoff perception events fire after the 0.2s transition delay, not at Q press.
+- Serialized field rename (`_shadowPerception` → `_perceptionSource`) breaks prior inspector assignments until scene is recreated.
+
+### Rollback Notes
+
+- Delete `Assets/_Project/Code/Shadow/IShadowPerceptionSource.cs` and its `.meta`.
+- Revert changes to the six runtime/editor files listed above.
+- Rerun pre-014B setup or restore `Wave007B_HouseWithTheSwitches.unity` from version control.
+- Remove the Wave `014B` entry from the top of `Docs/BUILD_LOG.md`.
+
 ## Build Log Rules
 1. Newest entries at the top.
 2. Editor tooling waves must include:
@@ -8,6 +97,52 @@
 - created/updated assets
 - manual Unity validation steps
 - rollback steps
+
+## 2026-05-17 - Wave 014A: Ego/Shadow Viewport Handoff Prototype
+
+### Summary
+
+Scene-local ego/shadow viewport handoff prototype for `room.main_floor.house_with_the_switches`. Pressing `Q` toggles the player viewport between ego and shadow anchors while leaving a visible capsule proxy for the inactive self. Player controller scripts were not modified.
+
+### Files Changed
+
+- `Assets/_Project/Code/Rooms/LocalViewportHandoff.cs`
+- `Assets/_Project/Code/Editor/Wave014AViewportHandoffSetup.cs`
+- `Docs/BUILD_LOG.md`
+
+### What Was Implemented
+
+- Added `LocalViewportHandoff` with a strict four-state machine (`EgoActive`, `TransitioningToShadow`, `ShadowActive`, `TransitioningToEgo`).
+- Uses `ShadowPerception.WasPressedThisFrame()` for toggle input (not hold-based `ShadowPerceptionController` logic).
+- Locks movement by disabling `PlayerController` and `CharacterController`, teleports via `Transform.SetPositionAndRotation`, then re-enables after a `0.2s` fracture delay.
+- Swaps amber ego and blue-black shadow proxy capsules at recorded anchors during transitions.
+- Plays a local fracture cue via assigned clip or `ShadowAudioClipFactory.CreateDestabilizedGuidanceCue()` fallback.
+- Added editor setup menu `ADITD/Setup/Recreate Wave 014A Viewport Handoff` to generate `Assets/_Project/Scenes/Wave014A_ViewportHandoff.unity` (graybox room, player prefab, proxies, handoff wiring, `ShadowPerceptionController` disabled on the player instance).
+
+### Manual Test Steps
+
+1. Open Unity and let scripts compile.
+2. Run menu `ADITD/Setup/Recreate Wave 014A Viewport Handoff`.
+3. Open `Assets/_Project/Scenes/Wave014A_ViewportHandoff.unity` and enter Play Mode.
+4. Confirm the player starts in first-person near the front of the room and a blue-black shadow proxy capsule is visible near the back seam anchor.
+5. Press `Q` once: player teleports to the shadow anchor, amber ego proxy appears where you stood, shadow proxy hides, fracture audio plays, and movement resumes after a brief pause.
+6. Walk around in shadow view, then press `Q` again: player returns to the ego anchor, shadow proxy reappears at the shadow side, ego proxy hides, fracture audio plays.
+7. Repeat several times and confirm no CharacterController float, snap-back, or input lock after transitions complete.
+8. Confirm `PlayerController.cs`, `PlayerLook.cs`, `PlayerInteractor.cs`, and `PlayerContext.cs` were not modified.
+
+### Known Limitations
+
+- Prototype only; no integration with `ShadowPerceptionController`, revealables, or the full Wave 007B puzzle flow.
+- Anchor positions are transform snapshots only (no animation blend).
+- Editor-generated fracture clip is procedural and not saved as a project audio asset.
+- Mid-transition disable/stop can leave the player locked until Play Mode restarts.
+
+### Rollback Notes
+
+- Delete `Assets/_Project/Code/Rooms/LocalViewportHandoff.cs` and its `.meta`.
+- Delete `Assets/_Project/Code/Editor/Wave014AViewportHandoffSetup.cs` and its `.meta`.
+- Delete `Assets/_Project/Scenes/Wave014A_ViewportHandoff.unity` and its `.meta` if created.
+- Remove the Wave `014A` entry from the top of `Docs/BUILD_LOG.md`.
 
 ## 2026-05-16 - Wave 013B-RetryPrep: Bus of Names Retry Constraint Brief
 

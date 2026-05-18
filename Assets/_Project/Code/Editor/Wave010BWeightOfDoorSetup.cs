@@ -71,17 +71,17 @@ namespace ADoorInsideTheDark.Editor
             GameObject rightWall = CreatePrimitive(parent, "RightWall", PrimitiveType.Cube, new Vector3(1.5f, 1.5f, 0f), new Vector3(0.25f, 3f, 8f));
 
             GameObject runner = CreatePrimitive(parent, "RunnerRug", PrimitiveType.Cube, new Vector3(0f, 0.04f, 0f), new Vector3(1.15f, 0.02f, 6.5f));
-            runner.GetComponent<Renderer>().material.color = new Color(0.32f, 0.30f, 0.28f, 1f);
+            SetRendererColor(runner.GetComponent<Renderer>(), new Color(0.32f, 0.30f, 0.28f, 1f));
 
             GameObject pocketRug = CreatePrimitive(parent, "SafePocketMat", PrimitiveType.Cube, new Vector3(-1.05f, 0.03f, -3.35f), new Vector3(1.4f, 0.02f, 1.5f));
-            pocketRug.GetComponent<Renderer>().material.color = new Color(0.26f, 0.28f, 0.30f, 1f);
+            SetRendererColor(pocketRug.GetComponent<Renderer>(), new Color(0.26f, 0.28f, 0.30f, 1f));
             pocketRug.GetComponent<Collider>().enabled = false;
 
             GameObject sideTable = CreatePrimitive(parent, "SideTable", PrimitiveType.Cube, new Vector3(-1.1f, 0.35f, -3.2f), new Vector3(0.55f, 0.35f, 0.45f));
-            sideTable.GetComponent<Renderer>().material.color = new Color(0.36f, 0.33f, 0.30f, 1f);
+            SetRendererColor(sideTable.GetComponent<Renderer>(), new Color(0.36f, 0.33f, 0.30f, 1f));
 
             GameObject doorPanel = CreatePrimitive(parent, "HeavyDoor", PrimitiveType.Cube, new Vector3(0f, 1.1f, 3.74f), new Vector3(1.15f, 2.15f, 0.12f));
-            doorPanel.GetComponent<Renderer>().material.color = new Color(0.38f, 0.36f, 0.34f, 1f);
+            SetRendererColor(doorPanel.GetComponent<Renderer>(), new Color(0.38f, 0.36f, 0.34f, 1f));
             WeightOfDoorInteractable doorInteractable = doorPanel.AddComponent<WeightOfDoorInteractable>();
 
             GameObject bindingsRoot = new("DoorBindingsRoot");
@@ -104,7 +104,7 @@ namespace ADoorInsideTheDark.Editor
             thermos.transform.localPosition = new Vector3(-1.05f, 0.58f, -3.18f);
             thermos.transform.localScale = new Vector3(0.12f, 0.14f, 0.12f);
             thermos.transform.localRotation = Quaternion.Euler(8f, 0f, 2f);
-            thermos.GetComponent<Renderer>().material.color = new Color(0.22f, 0.56f, 0.38f, 1f);
+            SetRendererColor(thermos.GetComponent<Renderer>(), new Color(0.22f, 0.56f, 0.38f, 1f));
 
             GameObject snowOwl = GameObject.CreatePrimitive(PrimitiveType.Cube);
             snowOwl.name = "SnowOwlFeatherShimmer";
@@ -113,7 +113,7 @@ namespace ADoorInsideTheDark.Editor
             snowOwl.transform.localScale = new Vector3(0.08f, 0.02f, 0.26f);
             snowOwl.transform.localRotation = Quaternion.Euler(12f, 20f, -5f);
             snowOwl.GetComponent<Collider>().enabled = false;
-            snowOwl.GetComponent<Renderer>().material.color = new Color(0.92f, 0.93f, 0.95f, 1f);
+            SetRendererColor(snowOwl.GetComponent<Renderer>(), new Color(0.92f, 0.93f, 0.95f, 1f));
 
             GameObject overheadLightGo = new("OverheadLight");
             overheadLightGo.transform.SetParent(parent, false);
@@ -138,7 +138,7 @@ namespace ADoorInsideTheDark.Editor
             controllerSo.FindProperty("_doorPanelTransform").objectReferenceValue = doorPanel.transform;
             controllerSo.FindProperty("_bindingsRoot").objectReferenceValue = bindingsRoot;
             controllerSo.FindProperty("_bindingsRevealable").objectReferenceValue = revealable;
-            controllerSo.FindProperty("_shadowPerception").objectReferenceValue = shadowPerception;
+            controllerSo.FindProperty("_perceptionSource").objectReferenceValue = shadowPerception;
             controllerSo.FindProperty("_clarityAudioSource").objectReferenceValue = roomClarityAudio;
             controllerSo.FindProperty("_thermosRoot").objectReferenceValue = thermos.transform;
             controllerSo.FindProperty("_thermosCompletedLocalPosition").vector3Value = new Vector3(-1.15f, 0.06f, -3.45f);
@@ -158,7 +158,7 @@ namespace ADoorInsideTheDark.Editor
             controllerSo.ApplyModifiedPropertiesWithoutUndo();
 
             SerializedObject revealableSo = new(revealable);
-            revealableSo.FindProperty("_controller").objectReferenceValue = shadowPerception;
+            revealableSo.FindProperty("_perceptionSource").objectReferenceValue = shadowPerception;
             SetObjectArray(revealableSo.FindProperty("_objectsToToggle"), System.Array.Empty<Object>());
             SetObjectArray(
                 revealableSo.FindProperty("_renderersToToggleVisibility"),
@@ -315,6 +315,18 @@ namespace ADoorInsideTheDark.Editor
             audioSource.loop = false;
             audioSource.spatialBlend = 0f;
             audioSource.volume = 1f;
+        }
+
+        private static void SetRendererColor(Renderer renderer, Color color)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            Material material = new Material(renderer.sharedMaterial);
+            material.color = color;
+            renderer.sharedMaterial = material;
         }
     }
 }
